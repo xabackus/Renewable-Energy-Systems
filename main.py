@@ -1,3 +1,5 @@
+"""Optimization Model Generator"""
+
 from pyomo.environ import *
 
 def get_sets(model, num_solar, num_wind, num_batt, num_hydro, num_therm, time_periods = 24, num_scenarios = 1, \
@@ -43,7 +45,7 @@ def get_parameters(model):
     Pi[s] = probability of scenario s
     Pmin[g], Pmax[g] = min and max power output of generator g
     RU[g], RD[g] = ramp up and down rate of generator g
-    Dd[t] = demand curve function at time t
+    Dd[t] = demand curve at time t
     Pchg[g] = max charging power for battery g
     Pdchg[g] = max discharging power for battery g
     Hchg[g] = charging efficiency of battery g
@@ -126,8 +128,8 @@ def get_variables(model):
     soc[g, t, s] = state of charge for battery g at time t in scenario s
     pchg[g, t, s], pdchg[g, t, s] = charging and discharging power for battery g at time t in scenario s
     uchg[g, t, s], udchg[g, t, s] = charging and discharging of battery g at time t in scenario s (binary)
-    * th[n, t, s] = voltage angle at node n at time t in scenario s
-    * f[l, t, s] = power flow on line l at time t in scenario s
+    * NOT INCLUDED th[n, t, s] = voltage angle at node n at time t in scenario s
+    * NOT INCLUDED f[l, t, s] = power flow on line l at time t in scenario s 
     ps[g, t, s, o] = second-stage adjustment of generator g at time t in scenario s and realization w
     pmax[g, t, s] = maximum available capacity of generator g at time t in scenario s
     rU[g, t, s], rD[g, t, s] = up and down reserves provided by generator g at time t in scenario s
@@ -149,8 +151,6 @@ def get_variables(model):
     model.pdchg = Var(model.Gbatt, model.T, model.S, within = NonNegativeReals)
     model.uchg = Var(model.Gbatt, model.T, model.S, within = Binary)
     model.udchg = Var(model.Gbatt, model.T, model.S, within = Binary)
-    # model.th = Var(model.N, model.T, model.S, within = NonNegativeReals)
-    # model.f = Var(model.L, model.T, model.S, within = NonNegativeReals)
     model.ps = Var(model.G, model.T, model.S, model.O, within = NonNegativeReals)
     model.pmax = Var(model.G, model.T, model.S, within = NonNegativeReals)
     model.rU = Var(model.G, model.T, model.S, within = NonNegativeReals)
@@ -321,7 +321,7 @@ def opt_model_generator(num_solar=0, num_wind=0, num_batt=0, num_hydro=0, num_th
     model_name = "UC Model"
     model = AbstractModel(model_name)
 
-    # model set up
+    # model set-up
     get_sets(model, num_solar, num_wind, num_batt, num_hydro, num_therm, time_periods, num_scenarios, num_nodes, num_lines, num_uncert, num_demands) # sets
     get_parameters(model)
     get_variables(model)
@@ -342,26 +342,3 @@ def opt_model_generator(num_solar=0, num_wind=0, num_batt=0, num_hydro=0, num_th
         get_thermal_constraints(model)
 
     return model
-
-
-# model = opt_model_generator(num_therm=3) # get abstract model
-# model = opt_model_generator(num_therm = 2, num_nodes = 4)
-
-def solve_model(model, data):
-    model = opt_model_generator(num_therm = 2, num_nodes = 4)
-    data = DataPortal()
-    data.load(filename='opt_model_test.csv') # load data from CSV file
-    # figure out how csv file is structured
-    instance = model.create_instance(data) # generate concrete model from abstract model
-
-    opt = SolverFactory('gurobi')
-    result = opt.solve(instance, tee=True) # solve for optimal cost
-    print("optimal value:", value(instance.cost))
-    if hasattr(result.problem, 'upper_bound') and hasattr(result.problem, 'lower_bound'):
-        primal_bound = result.problem.upper_bound
-        dual_bound = result.problem.lower_bound
-
-    # instance.write("opt_model_generator.mps")
-    # print(results)
-
-

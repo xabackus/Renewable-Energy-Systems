@@ -1,9 +1,8 @@
-import case4gs
+""" Convert PYPOWER ppc case files to python dictionaries """
+
 import pickle
 
-ppc = case4gs.case4gs()
-
-def parsecase(num_solar=0, num_wind=0, num_batt=0, num_hydro=0, num_therm=0, time_periods = 24, num_scenarios = 1, \
+def parsecase(ppc, num_solar=0, num_wind=0, num_batt=0, num_hydro=0, num_therm=0, time_periods = 24, num_scenarios = 1, \
                         num_nodes = 0, num_lines = 0, num_uncert = 0, num_demands = 0):
     p = {}
 
