@@ -53,7 +53,7 @@ def get_parameters(model):
     SoCmin[g], SoCmax[g] = min and max state of charge for battery g
     Fmax[l] = max power flower on line l
     PTDF[n, l] = Power Transfer Distribution Factor for node n and line l
-    Xs[t, o] = realized solar power availability for scenario w and time t
+    # Xs[t, o] = realized solar power availability for scenario w and time t
     Xw[t, o] = realized wind power availability for scenario w and time t
     Xd[t, o] = realized electric demand for scenario w and time t
     PXsmax[g, t, o] = max available power from solar generator g based on realized solar availability
@@ -94,10 +94,10 @@ def get_parameters(model):
     model.SoCmax = Param(model.Gbatt)
     model.Fmax = Param(model.L)
     model.PTDF = Param(model.N, model.L)
-    model.Xs = Param(model.O, model.T)
-    model.Xw = Param(model.O, model.T)
-    model.Xd = Param(model.O, model.T)
-    model.PXsmax = Param(model.Gsolar, model.O, model.T)
+    # model.Xs = Param(model.T, model.O)
+    model.Xw = Param(model.T, model.O)
+    model.Xd = Param(model.T, model.O)
+    model.PXsmax = Param(model.Gsolar, model.T, model.O)
     model.Gam = Param(model.Gwind)
     model.SU = Param(model.G)
     model.SD = Param(model.G)
@@ -110,6 +110,7 @@ def get_parameters(model):
     model.Ld = Param(model.D, model.N)
     model.X = Param(model.L)
     model.Dl = Param(model.D)
+    model.Dt = Param()
     model.Ecap = Param(model.Gbatt)
     model.DODmax = Param(model.Gbatt)
     model.Inflow = Param(model.Ghydro, model.T, model.S)
@@ -128,30 +129,28 @@ def get_variables(model):
     soc[g, t, s] = state of charge for battery g at time t in scenario s
     pchg[g, t, s], pdchg[g, t, s] = charging and discharging power for battery g at time t in scenario s
     uchg[g, t, s], udchg[g, t, s] = charging and discharging of battery g at time t in scenario s (binary)
-    * NOT INCLUDED th[n, t, s] = voltage angle at node n at time t in scenario s
-    * NOT INCLUDED f[l, t, s] = power flow on line l at time t in scenario s 
-    ps[g, t, s, o] = second-stage adjustment of generator g at time t in scenario s and realization w
+    ps[g, t, s, o] = second-stage adjustment of generator g at time t in scenario s and realization o
     pmax[g, t, s] = maximum available capacity of generator g at time t in scenario s
     rU[g, t, s], rD[g, t, s] = up and down reserves provided by generator g at time t in scenario s
-    uD[d, t, s, o] = unserved demand at bus d at time t in scenario s and realization w
-    f[l, t, s, o] = power flow on line l at time t in scenario s and realization w
-    th[i, t, s, o] = voltage angle at bus i at time t in scenario s and realization w
+    uD[d, t, s, o] = unserved demand at bus d at time t in scenario s and realization o
+    f[l, t, s, o] = power flow on line l at time t in scenario s and realization o
+    th[i, t, s, o] = voltage angle at bus i at time t in scenario s and realization o
     e[g, t, s] = reservoir level of hydro generator g at tiem t in scenario s
     q[g, t, s] = water discharge of hydro generator g at time t in scenario s
     s[g, t, s] = water spillage of hydro generator g at time t in scenario s
     h[g, t, s] = net head of hydro generator g at time t in scenario s 
     """
     model.u = Var(model.G, model.T0, model.S, within = Binary)
-    model.y = Var(model.G, model.T, model.S, within = Binary)
-    model.z = Var(model.G, model.T, model.S, within = Binary)
+    model.y = Var(model.G, model.T, model.S, within = Binary, initialize=0) ###
+    model.z = Var(model.G, model.T, model.S, within = Binary, initialize=0) ### 
     model.p = Var(model.G, model.T0, model.S, within = NonNegativeReals)
     model.r = Var(model.G, model.T, model.S, within = NonNegativeReals)
-    model.soc = Var(model.Gbatt, model.T, model.S, within = NonNegativeReals)
+    model.soc = Var(model.Gbatt, model.T0, model.S, within = NonNegativeReals)
     model.pchg = Var(model.Gbatt, model.T, model.S, within = NonNegativeReals)
     model.pdchg = Var(model.Gbatt, model.T, model.S, within = NonNegativeReals)
     model.uchg = Var(model.Gbatt, model.T, model.S, within = Binary)
     model.udchg = Var(model.Gbatt, model.T, model.S, within = Binary)
-    model.ps = Var(model.G, model.T, model.S, model.O, within = NonNegativeReals)
+    model.ps = Var(model.G, model.T0, model.S, model.O, within = NonNegativeReals)
     model.pmax = Var(model.G, model.T, model.S, within = NonNegativeReals)
     model.rU = Var(model.G, model.T, model.S, within = NonNegativeReals)
     model.rD = Var(model.G, model.T, model.S, within = NonNegativeReals)
@@ -221,19 +220,19 @@ def get_hydro_constraints(model):
 
 def get_battery_constraints(model):
     def soc_min(model, g, t, s):
-        return model.SoCmin[g] <= model.SoC[g, t, s]
+        return model.SoCmin[g] <= model.soc[g, t, s]
     def soc_max(model, g, t, s):
-        return model.SoC[g, t, s] <= model.SoCmax[g]
+        return model.soc[g, t, s] <= model.SoCmax[g]
     def charge_power_min(model, g, t, s):
         return 0 <= model.pchg[g, t, s]
     def charge_power_max(model, g, t, s):
-        return model.pchg[g, t, s] <= model.Pmaxchg[g] * model.uchg[g, t, s]
+        return model.pchg[g, t, s] <= model.Pchg[g] * model.uchg[g, t, s]
     def discharge_power_min(model, g, t, s):
         return 0 <= model.pdchg[g, t, s]
     def discharge_power_max(model, g, t, s):
-        return model.pdchg[g, t, s] <= model.Pmaxdchg[g] * model.udchg[g, t, s]
+        return model.pdchg[g, t, s] <= model.Pdchg[g] * model.udchg[g, t, s]
     def soc_update(model, g, t, s):
-        return model.SoC[g, t, s] == model.SoC[g, t-1, s] + (model.Hchg[g] * model.pchg[g, t, s] - 1/model.Hchg[g] * model.pdchg[g, t, s]) \
+        return model.soc[g, t, s] == model.soc[g, t-1, s] + (model.Hchg[g] * model.pchg[g, t, s] - 1/model.Hchg[g] * model.pdchg[g, t, s]) \
             * model.Dt/model.Ecap[g]
     def exclusivity(model, g, t, s):
         return model.uchg[g, t, s] + model.udchg[g, t, s] <= 1
@@ -249,20 +248,20 @@ def get_battery_constraints(model):
 def get_power_DCPF_constraints(model):
     def nodal_balance(model, t, s, o, i):
         return sum(model.Lg[g, i] * (model.p[g, t, s] + model.ps[g, t, s, o]) for g in model.G) - sum(model.Ll[l, i] * model.f[l, t, s, o] for l in model.L) \
-            == sum(model.Ld[d, i] * (model.Dl[d] * model.Xd[t, o] - model.uD[d, t, s, o]) for d in model.D)
+            == sum(model.Ld[d, i] * (model.Dl[d] * model.Xd[t, o] - model.uD[d, t, s, o]) for d in model.D) ###
     def dc_flow(model, l , t, s, o):
         return model.f[l, t, s, o] == sum(model.Ll[l, i] * model.th[i, t, s, o]/model.X[l] for i in model.N)
     def transmission_min(model, l, t, s, o):
         return -model.Fmax[l] <= model.f[l, t, s, o]
     def transmission_max(model, l, t, s, o):
         return model.f[l, t, s, o] <= model.Fmax[l]
-    def system_balance(model, t, s):
-        return sum(model.p[g, t, s] for g in model.G) + sum((model.pdchg[g, t, s] - model.pchg[g, t, s]) for g in model.Gbatt) == model.Dd[t]
+    # def system_balance(model, t, s):
+    #     return sum(model.p[g, t, s] for g in model.G) + sum((model.pdchg[g, t, s] - model.pchg[g, t, s]) for g in model.Gbatt) == model.Dd[t] ###
     model.nodalbalance = Constraint(model.T, model.S, model.O, model.N, rule=nodal_balance)
-    model.dcflow = Constraint(model.T, model.S, model.O, model.N, rule=dc_flow)
-    model.transmissionmin = Constraint(model.T, model.S, model.O, model.N, rule=transmission_min)
-    model.transmissionmax = Constraint(model.T, model.S, model.O, model.N, rule=transmission_max)
-    model.systembalance = Constraint(model.T, model.S, rule=system_balance)
+    model.dcflow = Constraint(model.L, model.T, model.S, model.O, rule=dc_flow)
+    model.transmissionmin = Constraint(model.L, model.T, model.S, model.O, rule=transmission_min)
+    model.transmissionmax = Constraint(model.L, model.T, model.S, model.O, rule=transmission_max)
+    # model.systembalance = Constraint(model.T, model.S, rule=system_balance)
 
 def get_reserve_constraints(model):
     def reserve_up(model, t, s):
@@ -270,9 +269,9 @@ def get_reserve_constraints(model):
     def reserve_down(model, t, s):
         return sum(model.rD[g, t, s] for g in model.G) >= model.Rdn[t]
     def reserve_max(model, g, t, s, o):
-        return model.p[g, t, s] + model.rU[g, t, s] + model.ps[g, t, s, o] <= model.Pmax[g, t]
+        return model.p[g, t, s] + model.rU[g, t, s] + model.ps[g, t, s, o] <= model.Pmax[g] # Pmax/min g, t for both?
     def reserve_min(model, g, t, s, o):
-        return model.p[g, t, s] - model.rD[g, t, s] - model.ps[g, t, s, o] >= model.Pmin[g, t] * model.u[g, t, s]
+        return model.p[g, t, s] - model.rD[g, t, s] - model.ps[g, t, s, o] >= model.Pmin[g] * model.u[g, t, s]
     model.reserve_up = Constraint(model.T, model.S, rule=reserve_up)
     model.reserve_down = Constraint(model.T, model.S, rule=reserve_down)
     model.reserve_max = Constraint(model.G, model.T, model.S, model.O, rule=reserve_max)
@@ -280,10 +279,12 @@ def get_reserve_constraints(model):
 
 def get_thermal_constraints(model):
     def up_limit(model, g, t, s, o):
-        return model.p[g, t, s] + model.pw[g, t, s, o] - (model.p[g, t-1, s] - model.ps[g, t-1, s, o]) \
+        return model.p[g, t, s] + model.ps[g, t, s, o] - (model.p[g, t-1, s] - model.ps[g, t-1, s, o]) \
             <= model.RU[g] * (model.u[g, t, s] - model.y[g, t, s]) + model.SU[g] * model.y[g, t, s]
     def down_limit(model, g, t, s, o):
-        return model.p[g, t, s] + model.pw[g, t, s, o] - (model.p[g, t+1, s] - model.ps[g, t+1, s, o]) \
+        if t == len(model.T):
+            return Constraint.Skip
+        return model.p[g, t, s] + model.ps[g, t, s, o] - (model.p[g, t+1, s] - model.ps[g, t+1, s, o]) \
             <= model.RD[g] * (model.u[g, t, s] - model.z[g, t+1, s]) + model.SD[g] * model.z[g, t+1, s]
     def up_logice(model, g, t, tau, s):
         if t + 1 <= tau <= min(t + model.UT[g] - 1, model.T.dimen):
@@ -297,9 +298,9 @@ def get_thermal_constraints(model):
         return model.y[g, t, s] - model.z[g, t, s] == model.u[g, t, s] - model.u[g, t-1, s]
     def not_simultaneuous(model, g, t, s):
         return model.y[g, t, s] + model.z[g, t, s] <= 1
-    def pminlim(model, g, t, s):
+    def pminlim(model, g, t, s): 
         return model.Pmin[g] * model.u[g, t, s] <= model.p[g, t, s]
-    def pmaxlim(model, g, t, s):
+    def pmaxlim(model, g, t, s): # error might be here
         return model.p[g, t, s] <= model.Pmax[g] * model.u[g, t, s]
     def rampup(model, g, t, s):
         return model.p[g, t, s] - model.p[g, t-1, s] <= model.RU[g]
@@ -311,13 +312,13 @@ def get_thermal_constraints(model):
     model.downlogice = Constraint(model.Gtherm, model.T, model.T, model.S, rule=down_logice)
     model.logice = Constraint(model.Gtherm, model.T, model.S, rule=logice)
     model.notsimul = Constraint(model.Gtherm, model.T, model.S, rule=not_simultaneuous)
-    model.pmaxlim = Constraint(model.Gtherm, model.T, model.S, rule=pminlim)
-    model.pminlim = Constraint(model.Gtherm, model.T, model.S, rule=pmaxlim)
+    model.pminlim = Constraint(model.Gtherm, model.T, model.S, rule=pminlim)
+    model.pmaxlim = Constraint(model.Gtherm, model.T, model.S, rule=pmaxlim)
     model.rampup = Constraint(model.Gtherm, model.T, model.S, rule=rampup)
     model.rampdown = Constraint(model.Gtherm, model.T, model.S, rule=rampdown)
 
 def opt_model_generator(num_solar=0, num_wind=0, num_batt=0, num_hydro=0, num_therm=0, time_periods = 24, num_scenarios = 1, \
-                        num_nodes = 0, num_lines = 0, num_uncert = 0, num_demands = 0):
+                        num_nodes = 0, num_lines = 0, num_uncert = 1, num_demands = 0):
     model_name = "UC Model"
     model = AbstractModel(model_name)
 
