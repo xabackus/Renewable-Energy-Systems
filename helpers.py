@@ -211,7 +211,9 @@ def parsecase(net, num_solar=0, num_wind=0, num_batt=0, num_hydro=0, num_therm=0
     p["Xw"] = {(t, o): 100 * num_wind for t in T for o in O}  ###
     p["Xd"] = {(t, o): 100 * num_batt for t in T for o in O}  ###
 
-    return pickle.dumps({None: p})
+    data = pickle.dumps({None: p})
+    pickle.dump(data, open("UCdata.p", "wb"))
+    return data
 
 
 def random_range(min_val, max_val):

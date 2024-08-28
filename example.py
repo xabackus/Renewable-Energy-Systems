@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+import sys
+
 import pyomo.environ as pyo
 from helpers import parsecase, add_gens_to_case
 import pickle
@@ -8,10 +11,14 @@ import matplotlib.pyplot as plt
 from pyomo.opt import SolverStatus, TerminationCondition
 
 net = pandapower.networks.case_ieee30()
-num_solar = 3
+num_solar = int(sys.argv[1])
+num_wind = int(sys.argv[2])
+num_hydro = int(sys.argv[3])
+num_batt = int(sys.argv[4])
+num_therm = int(sys.argv[5])
 
 # Usage
-add_gens_to_case(net, num_solar, 2, 5)
+add_gens_to_case(net, num_solar, num_wind, num_batt)
 
 # single helper function so that the kwargs are the same
 kwargs = {'num_solar': num_solar, 'num_wind':  len(net.sgen) - num_solar, 'num_hydro': 0, 'num_batt': len(net.storage), 'num_therm': len(net.gen), 'num_nodes': len(net.bus), 'num_lines': len(net.line), 'time_periods': 24, 'num_scenarios': 1, 'num_uncert': 1, 'num_demands': len(net.load)}
@@ -23,7 +30,7 @@ model = ucml.opt_model_generator(**kwargs)
 
 instance = model.create_instance(data)
 # make into MPS file
-#model.write("out.mps")​
+instance.write("UCmodel.mps")
 
 opt = pyo.SolverFactory('gurobi')
 result = opt.solve(instance, tee=False)
@@ -34,7 +41,7 @@ if result.solver.status == SolverStatus.ok and result.solver.termination_conditi
         print("primal bound:", primal_bound)
         print("dual bound:", dual_bound)
         out = {"dual_bound": dual_bound, "primal_bound": primal_bound}
-    print("optimal value:", pyo.value(instance.cost))
+    print("optimal value:", pyo.value(instance.obj))
 else:
     print("NO OPTIMAL VALUE FOUND")
 
