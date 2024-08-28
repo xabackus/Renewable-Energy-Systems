@@ -1,0 +1,41 @@
+gen,commit,curtail,cost,primal_bound,dual_bound,status
+"     r_id  hour         gen
+0       1  2401   21.400000
+1       2  2401   42.000000
+2       3  2401  474.194268
+3       4  2401   16.500000
+4       5  2401   24.700000
+..    ...   ...         ...
+643    29  2424    0.000000
+644    30  2424    0.000000
+645    31  2424  144.421120
+646    32  2424    3.184932
+647    33  2424    0.000000
+
+[648 rows x 3 columns]","     r_id  hour  gen
+0       3  2401  1.0
+1       4  2401  1.0
+2       5  2401  1.0
+3       6  2401  1.0
+4       7  2401  1.0
+..    ...   ...  ...
+523    26  2424  0.0
+524    27  2424  0.0
+525    28  2424  0.0
+526    29  2424  0.0
+527    30  2424  0.0
+
+[528 rows x 3 columns]","    hour                           gen_full      cf  r_id  existing_cap_mw        gen  curt
+0   2401  wec_sdge_onshore_wind_turbine_1.0  0.7505    31            217.6  163.30880   0.0
+1   2402  wec_sdge_onshore_wind_turbine_1.0  0.7803    31            217.6  169.79328   0.0
+2   2403  wec_sdge_onshore_wind_turbine_1.0  0.5290    31            217.6  115.11040   0.0
+3   2404  wec_sdge_onshore_wind_turbine_1.0  0.4621    31            217.6  100.55296   0.0
+4   2405  wec_sdge_onshore_wind_turbine_1.0  0.3703    31            217.6   80.57728   0.0
+..   ...                                ...     ...   ...              ...        ...   ...
+67  2420    wec_sdge_solar_photovoltaic_1.0  0.0000    33           3500.0    0.00000   0.0
+68  2421    wec_sdge_solar_photovoltaic_1.0  0.0000    33           3500.0    0.00000   0.0
+69  2422    wec_sdge_solar_photovoltaic_1.0  0.0000    33           3500.0    0.00000   0.0
+70  2423    wec_sdge_solar_photovoltaic_1.0  0.0000    33           3500.0    0.00000   0.0
+71  2424    wec_sdge_solar_photovoltaic_1.0  0.0000    33           3500.0    0.00000   0.0
+
+[72 rows x 7 columns]",862331.1901347338,853837.8516495011,853837.8516495011,2

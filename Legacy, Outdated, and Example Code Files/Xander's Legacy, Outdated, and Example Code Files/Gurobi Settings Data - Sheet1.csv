@@ -1,0 +1,60 @@
+Setting name,What it does,% Gap at -1 (Gurobi auto-selects best choice),Gap at 0 (no cuts),Gap at 1,Gap at 2,Gap at 3 (only for Cuts),Correlation type
+Cuts,Global cut generation control,0.253,0.2982,0.253,0.7339,0.1388,Parabolic?
+,,,,,,,
+"For the following rows, ""Cuts"" has been set to 0 to isolate the effects of altering each setting individually",,,,,,,
+,,,,,,,
+BQPCuts,BQP cut generation,0.2982,0.2982,0.2982,0.2982,,None
+CliqueCuts,Clique cut generation,0.2982,0.2982,0.2982,0.2982,,None
+CoverCuts,Cover cut generation,0.2982,0.2982,0.4805,0.4805,,Step function
+FlowCoverCuts,Flow cover cut generation,0.2982,0.2982,0.7139,0.7139,,Step function
+FlowPathCuts,Flow path cut generation,0.2982,0.2982,0.2982,0.2982,,None
+GUBCoverCuts,GUB cover cut generation,0.2982,0.2982,0.2982,0.2982,,None
+ImpliedCuts,Implied bound cut generation,0.2982,0.2982,0.2982,0.2982,,None
+InfProofCuts,Infeasibility proof cut generation,0.2982,0.2982,0.2982,0.2982,,None
+LiftProjectCuts,Lift-and-project cut generation,0.2982,0.2982,0.727,0.727,,Step function
+MIPSepCuts,MIP separation cut generation,0.2982,0.2982,0.2982,0.2982,,None
+MIRCuts,MIR cut generation,0.2982,0.2982,0.7268,0.7268,,Step function
+MixingCuts,Mixing cut generation,0.2982,0.2982,0.2982,0.2982,,None
+ModKCuts,Mod-k cut generation,0.2982,0.2982,0.2982,0.2982,,None
+NetworkCuts,Network cut generation,0.2982,0.2982,0.2982,0.2982,,None
+ProjImpliedCuts,Projected implied bound cut generation,0.2982,0.2982,0.2982,0.2982,,None
+PSDCuts,PSD cut generation,0.2982,0.2982,0.2982,0.2982,,None
+RelaxLiftCuts,Relax-and-lift cut generation,0.2982,0.2982,0.727,0.727,,Step function
+RLTCuts,RLT cut generation,0.2982,0.2982,0.2982,0.2982,,None
+StrongCGCuts,Strong-CG cut generation,0.2982,0.2982,0.2982,0.2982,,None
+SubMIPCuts,Sub-MIP cut generation,0.2982,0.2982,0.2982,0.2954,,Negative step function at 2
+ZeroHalfCuts,Zero-half cut generation,0.2982,0.2982,0.2982,0.2982,,None
+,,,,,,,
+Setting name,What it does,% Gap at -1 (Gurobi auto-selects best choice),0,1,2,3,10
+CutAggPasses,Constraint aggregation passes performed during cut generation,0.2982,0.2982,0.2982,0.2982,0.2982,0.2982
+CutPasses,Root cutting plane pass limit,0.2982,0.5036,0.2982,0.2982,0.2982,0.2982
+GomoryPasses,Root Gomory cut pass limit,0.2982,0.2982,0.7408,0.7408,0.7408,0.7408
+,,,,,,,
+"For the following rows, ""Cuts"" has been set to 3 to isolate the effects of turning off each setting individually (comparison gap value is 0.1388)",,,,,,,
+,,,,,,,
+Setting name,What it does,Gap at 0 (no cuts),Effect of turning off,,,,
+BQPCuts,BQP cut generation,0.1388,None,,,,
+CliqueCuts,Clique cut generation,0.1388,None,,,,
+CoverCuts,Cover cut generation,0.1431,Negative,,,,
+FlowCoverCuts,Flow cover cut generation,0.2954,Negative,,,,
+FlowPathCuts,Flow path cut generation,0.1388,None,,,,
+GUBCoverCuts,GUB cover cut generation,0.1388,None,,,,
+ImpliedCuts,Implied bound cut generation,0.1388,None,,,,
+InfProofCuts,Infeasibility proof cut generation,0.1388,None,,,,
+LiftProjectCuts,Lift-and-project cut generation,0.1388,None,,,,
+MIPSepCuts,MIP separation cut generation,0.1388,None,,,,
+MIRCuts,MIR cut generation,0.1392,Negative,,,,
+MixingCuts,Mixing cut generation,0.1388,None,,,,
+ModKCuts,Mod-k cut generation,0.1388,None,,,,
+NetworkCuts,Network cut generation,0.1388,None,,,,
+ProjImpliedCuts,Projected implied bound cut generation,0.1388,None,,,,
+PSDCuts,PSD cut generation,0.1388,None,,,,
+RelaxLiftCuts,Relax-and-lift cut generation,0.1388,None,,,,
+RLTCuts,RLT cut generation,0.1388,None,,,,
+StrongCGCuts,Strong-CG cut generation,0.1388,None,,,,
+SubMIPCuts,Sub-MIP cut generation,0.1388,None,,,,
+ZeroHalfCuts,Zero-half cut generation,0.1388,None,,,,
+,,,,,,,
+CutAggPasses,Constraint aggregation passes performed during cut generation,0.1388,None,,,,
+CutPasses,Root cutting plane pass limit,0.5036,Negative,,,,
+GomoryPasses,Root Gomory cut pass limit,0.7345,Negative,,,,
