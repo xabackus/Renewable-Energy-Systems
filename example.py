@@ -17,6 +17,7 @@ num_hydro = int(sys.argv[3])
 num_batt = int(sys.argv[4])
 num_therm = int(sys.argv[5])
 
+
 # Usage
 add_gens_to_case(net, num_solar, num_wind, num_batt)
 
@@ -56,15 +57,13 @@ Gbatt = range(num_renew + kwargs['num_hydro'] + 1, num_gen - kwargs['num_therm']
 Gtherm = range(num_gen - kwargs['num_therm'] + 1, num_gen + 1)
 Grenew = range(1, num_renew + 1)
 G = range(1, num_gen + 1)
-    
 
 df = pd.DataFrame({
     'thermal': [sum(pyo.value(instance.p[g, t, s]) for g in Gtherm for s in range(1, kwargs['num_scenarios'] + 1)) for t in range(1, kwargs['time_periods'] + 1)],
     'solar': [sum(pyo.value(instance.p[g, t, s]) for g in Gsolar for s in range(1, kwargs['num_scenarios'] + 1)) for t in range(1, kwargs['time_periods'] + 1)],
     'wind': [sum(pyo.value(instance.p[g, t, s]) for g in Gwind for s in range(1, kwargs['num_scenarios'] + 1)) for t in range(1, kwargs['time_periods'] + 1)],
     'hydro': [sum(pyo.value(instance.p[g, t, s]) for g in Ghydro for s in range(1, kwargs['num_scenarios'] + 1)) for t in range(1, kwargs['time_periods'] + 1)],
-    'battery': [sum(pyo.value(instance.pchg[g, t, s] + instance.pdchg[g, t, s]) for g in Gbatt for s in range(1, kwargs['num_scenarios'] + 1)) for t in range(1, kwargs['time_periods'] + 1)],
+    'battery': [sum(pyo.value(instance.p[g, t, s]) for g in Gbatt for s in range(1, kwargs['num_scenarios'] + 1)) for t in range(1, kwargs['time_periods'] + 1)],
     })
-
 ax = df.plot.area(stacked=True)
 plt.show()
