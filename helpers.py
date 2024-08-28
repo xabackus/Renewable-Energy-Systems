@@ -1,11 +1,11 @@
+"""Helper functions for using generated optimization models"""
+
 import pickle
 import random
-import numpy as np
 import pandapower as pp
 
-
 def parsecase(net, num_solar=0, num_wind=0, num_batt=0, num_hydro=0, num_therm=0, time_periods=24, num_scenarios=1, \
-              num_nodes=0, num_lines=0, num_uncert=1, num_demands=0):
+              num_nodes=0, num_lines=0, num_uncert=1, num_demands=0, model_name = "UCdata"):
     p = {}
 
     solar_start = 1
@@ -137,30 +137,11 @@ def parsecase(net, num_solar=0, num_wind=0, num_batt=0, num_hydro=0, num_therm=0
         p["Hbase"] = {g: random_range(95, 105) for g in Ghydro}
         p["Ebase"] = {g: random_range(203.12, 217.88) for g in Ghydro}
 
-    # Demand curve
-    total_load = net.load['p_mw'].sum()
-
-    def demand_curve(t):
-        base_load = total_load
-        peak_factor = 1.3
-        off_peak_factor = 0.7
-        time_of_day = t % 24
-        variation = random.uniform(0.95, 1.05)  # Introduces a small random variation of ±5%
-
-        if 9 <= time_of_day <= 20:  # Peak hours
-            return base_load * peak_factor * (1 + 0.1 * np.sin(np.pi * time_of_day / 12)) * variation
-        else:  # Off-peak hours
-            return base_load * off_peak_factor * (1 + 0.1 * np.sin(np.pi * time_of_day / 12)) * variation
-
-    # p["Dd"] = {t: demand_curve(t) for t in T}
-
-
     p["X"] = {l : net.line.x_ohm_per_km[l - 1] for l in L}
 
     p["Xw"] = {(t, o) : 100 * num_wind for t in T for o in O} ###
-    # p["Xd"] = {(t, o) : 100 * num_batt for t in T for o in O} ###
     
-    p["Xd"] = {(t, o, d): random_range(0.8, 1.2) * net.load.p_mw[d-1] 
+    p["Xd"] = {(t, o, d): random_range(0.8, 1.2) * net.load.p_mw[d-1]
         for t in T for o in O for d in D}
     p["Dd"] = {t: sum(p["Xd"][t, o, d] for d in D for o in O) for t in T}
 
@@ -208,17 +189,12 @@ def parsecase(net, num_solar=0, num_wind=0, num_batt=0, num_hydro=0, num_therm=0
 
     p["X"] = {l: net.line.x_ohm_per_km[l - 1] for l in L}
 
-    p["Xw"] = {(t, o): 100 * num_wind for t in T for o in O}  ###
-    # p["Xd"] = {(t, o): 100 * num_batt for t in T for o in O}  ###
-
     data = pickle.dumps({None: p})
-    pickle.dump(data, open("UCdata.p", "wb"))
+    pickle.dump(data, open("data/" + model_name + ".p", "wb"))
     return data
-
 
 def random_range(min_val, max_val):
     return min_val + random.random() * (max_val - min_val)
-
 
 def add_gens_to_case(net, num_solar=0, num_wind=0, num_batt=0):
     for _ in range(num_solar):
