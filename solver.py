@@ -63,6 +63,12 @@ def solve_milp(model, solver_name='gurobi', filename='solution.csv', type = 'mps
         try:
             # Read the model
             m = gp.read(model)
+
+            #-------------------------------------------------------------------------------------
+            # Set Cut setting Here
+            # m.setParam('Cuts', -1)
+            #-------------------------------------------------------------------------------------
+
             m.setParam('OutputFlag', True)  # Enable solver output
             m.optimize()
             
@@ -97,3 +103,6 @@ def solve_milp(model, solver_name='gurobi', filename='solution.csv', type = 'mps
             return 'An error occurred: ' + str(e)
     else:
         print('model type not supported yet, please update code or contact Xander')
+
+# Example Usage
+# solve_milp("/Users/xanderbackus/unit_commitment.mps","gurobi","test_solution.csv", "mps")
