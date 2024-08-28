@@ -4,8 +4,17 @@
 This project focuses on modeling renewable energy systems using Mixed-Integer Linear Programming (MILP) techniques. It provides tools to generate optimization models and solve them using various solvers. The project aims to facilitate the analysis and optimization of renewable energy systems through robust computational models.
 
 ## Files
-- `opt_model_generator.py`: Generates optimization models for renewable energy systems. It includes functions for defining constraints, objective functions, and the model itself based on given parameters.
-- `Choose_your_solver.py`: Allows users to solve the generated models using different MILP solvers like Gurobi, CBC, or GLPK and save the solutions to CSV files.
+- **`main.py`**: The main driver script for the project. This file orchestrates the data collection, model creation, and optimization processes.
+  
+- **`solver.py`**: Contains the core functions for setting up and solving the MILP models. This script interfaces with Gurobi and handles the solution process, including the application of various Gurobi settings to optimize the solution gap.
+
+- **`helpers.py`**: Includes utility functions that support the main operations, such as data processing, handling inputs and outputs, and managing intermediate calculations.
+
+- **`example.py`**: A sample script demonstrating how to use the provided tools and models. This file is designed to help users understand the basic workflow of the project.
+
+- **`model.pdf`**: Documentation of the unit commitment model used in this project. This document provides an in-depth explanation of the sets, parameters, variables, objective function, and constraints used in the MILP formulation.
+
+- **`settings.py`**: Illustrates the effect on the solution gap of changing each of Gurobi's cut settings. While the actual effect of changing a given setting depends on your precise unit commitment problem, it is always the same settings that have some effect, since they are the settings used in solving UC problems. Thus, this table is useful for getting an idea of what settings you should experiment on changing.
 
 ## Installation
 To get started with this project, follow these steps:
@@ -20,9 +29,9 @@ Ensure you have Python installed, and then install the necessary dependencies:
 ## Usage
 ### Generating and Solving Models
 To generate and solve an optimization model:
-1. Edit parameters in `opt_model_generator.py` to fit the system you are analyzing.
-2. Run the model generator script to create a model (`python opt_model_generator.py`).
-3. Edit `Choose_your_solver.py` to solve the model with your preferred solver (`python Choose_your_solver.py`).
+1. Disha and Ivy
+2. Disha and Ivy
+3. Edit `solver.py` to solve the model with your preferred solver (after editing, run the solver with `python solver.py`). If you want to change Gurobi's cut settings, you can do it here.
 
 Example usage is detailed within the scripts, guiding you on setting up your parameters and selecting the solver.
 

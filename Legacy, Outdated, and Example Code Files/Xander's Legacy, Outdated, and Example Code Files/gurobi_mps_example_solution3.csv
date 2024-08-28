@@ -1,0 +1,15 @@
+Variable,Value
+"commitment[G1,1]",1.0
+"commitment[G1,2]",1.0
+"commitment[G1,3]",1.0
+"commitment[G2,1]",0.0
+"commitment[G2,2]",0.0
+"commitment[G2,3]",0.0
+"power[G1,1]",50.0
+"power[G1,2]",60.0
+"power[G1,3]",55.0
+"power[G2,1]",0.0
+"power[G2,2]",0.0
+"power[G2,3]",0.0
+Primal Bound,3450.0
+Dual Bound,3450.0
