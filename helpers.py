@@ -155,6 +155,7 @@ def parsecase(net, num_solar=0, num_wind=0, num_batt=0, num_hydro=0, num_therm=0
     # p["Dd"] = {t: demand_curve(t) for t in T}
 
     p["X"] = {l: net.line.x_ohm_per_km[l - 1] for l in L}
+    p["X"] = {l: net.line.x_ohm_per_km[l - 1] for l in L}
 
     p["Xw"] = {(t, o): 100 * num_wind for t in T for o in O}  ###
 
@@ -231,6 +232,7 @@ def add_gens_to_case(net, num_solar=0, num_wind=0, num_batt=0):
     for _ in range(num_batt):
         bus = pp.get_free_id(net.bus)
         pp.create_bus(net, vn_kv=net.bus.vn_kv.mean())
+        pp.create_storage(net, bus, min_e_mwh=0, max_e_mwh=20, min_p_mw=0, max_p_mw=80, p_mw=20, q_mvar=0,
         pp.create_storage(net, bus, min_e_mwh=0, max_e_mwh=20, min_p_mw=0, max_p_mw=80, p_mw=20, q_mvar=0,
                           name="Battery", type="BT")
         pp.create_line(net, from_bus=pp.get_free_id(net.bus) % len(net.bus), to_bus=bus, length_km=5,
