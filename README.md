@@ -14,7 +14,7 @@ This project focuses on modeling renewable energy systems using Mixed-Integer Li
 
 - **`model.pdf`**: Documentation of the unit commitment model used in this project. This document provides an in-depth explanation of the sets, parameters, variables, objective function, and constraints used in the MILP formulation.
 
-- **`settings.py`**: Illustrates the effect on the solution gap of changing each of Gurobi's cut settings
+- **`settings.py`**: Illustrates the effect on the solution gap of changing each of Gurobi's cut settings. While the actual effect of changing a given setting depends on your precise unit commitment problem, it is always the same settings that have some effect, since they are the settings used in solving UC problems. Thus, this table is useful for getting an idea of what settings you should experiment on changing.
 
 ## Installation
 To get started with this project, follow these steps:
@@ -31,7 +31,7 @@ Ensure you have Python installed, and then install the necessary dependencies:
 To generate and solve an optimization model:
 1. Disha and Ivy
 2. Disha and Ivy
-3. Edit `solver.py` to solve the model with your preferred solver (`python solver.py`).
+3. Edit `solver.py` to solve the model with your preferred solver (after editing, run the solver with `python solver.py`). If you want to change Gurobi's cut settings, you can do it here.
 
 Example usage is detailed within the scripts, guiding you on setting up your parameters and selecting the solver.
 
