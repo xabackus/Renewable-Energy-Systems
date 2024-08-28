@@ -19,6 +19,7 @@ num_hydro = int(sys.argv[3])
 num_batt = int(sys.argv[4])
 num_therm = int(sys.argv[5])
 
+
 # Usage
 add_gens_to_case(net, num_solar, num_wind, num_batt)
 
@@ -64,6 +65,5 @@ df = pd.DataFrame({
     'hydro': [sum(pyo.value(instance.p[g, t, s]) for g in Ghydro for s in range(1, kwargs['num_scenarios'] + 1)) for t in range(1, kwargs['time_periods'] + 1)],
     'battery': [sum(pyo.value(instance.p[g, t, s]) for g in Gbatt for s in range(1, kwargs['num_scenarios'] + 1)) for t in range(1, kwargs['time_periods'] + 1)],
     })
-
 ax = df.plot.area(stacked=True)
 plt.show()

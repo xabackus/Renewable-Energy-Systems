@@ -38,46 +38,46 @@ def parsecase(net, num_solar=0, num_wind=0, num_batt=0, num_hydro=0, num_therm=0
 
     # Fixed costs ($/kW)
     p["CapEx"] = {
-        g: random_range(1473.41, 1628.59) if g in Gsolar else
-        random_range(1592.19, 1759.81) if g in Gwind else
-        random_range(3078.93, 3403.07) if g in Ghydro else
-        random_range(1841.09, 2034.91) if g in Gbatt else
-        random_range(3833.23, 4236.77) if gen_types[g] == 'coal' else random_range(1652.02, 1825.98)
+        g: random_range(1400, 1500) if g in Gsolar else  
+        random_range(1500, 1600) if g in Gwind else  
+        random_range(2900, 3100) if g in Ghydro else  
+        random_range(1700, 1900) if g in Gbatt else  
+        random_range(3800, 4200) if gen_types[g] == 'coal' else random_range(1600, 1800)
         for g in G
     }
 
     # Variable costs ($/MWh)
     p["OpEx"] = {
-        g: random_range(20.92, 23.08) if g in Gsolar else
-        random_range(30.42, 33.58) if g in Gwind else
-        random_range(87.40, 96.60) if g in Ghydro else
-        random_range(41.79, 46.21) if g in Gbatt else
-        random_range(81.71, 90.29) if gen_types[g] == 'coal' else random_range(37.05, 40.95)
+        g: random_range(19.5, 21.5) if g in Gsolar else
+        random_range(28.5, 31.5) if g in Gwind else
+        random_range(85.0, 95.0) if g in Ghydro else
+        random_range(40.0, 44.0) if g in Gbatt else
+        random_range(80.0, 90.0) if gen_types[g] == 'coal' else random_range(36.0, 40.0)
         for g in G
     }
 
     # Start-up costs ($/MW/Start)
     p["CSU"] = {
         g: 0 if g in Grenew else
-        random_range(2.37, 2.63) if g in Ghydro else
-        random_range(9.50, 10.50) if g in Gbatt else
-        random_range(166.25, 183.75) if gen_types[g] == 'coal' else random_range(80.75, 89.25)
+        random_range(2.2, 2.5) if g in Ghydro else
+        random_range(9.0, 10.0) if g in Gbatt else
+        random_range(160.0, 180.0) if gen_types[g] == 'coal' else random_range(78.0, 88.0)
         for g in G
     }
 
     # Shut-down costs ($/MW/Stop)
     p["CSD"] = {
         g: 0 if g in Grenew else
-        random_range(2.37, 2.63) if g in Ghydro else
-        random_range(4.75, 5.25) if g in Gbatt else
-        random_range(17.10, 18.90) if gen_types[g] == 'coal' else random_range(8.55, 9.45)
+        random_range(2.2, 2.5) if g in Ghydro else
+        random_range(4.5, 5.0) if g in Gbatt else
+        random_range(16.0, 18.0) if gen_types[g] == 'coal' else random_range(8.0, 9.0)
         for g in G
     }
 
     # Scenario probabilities
     p["Pi"] = {s: 1 / len(S) for s in range(1, num_scenarios + 1)}
 
-    # Generator limits 
+    # Generator limits
 
     p["Pmax"] = {
         g: net.sgen.max_p_mw[g - solar_start] if g in Grenew else
@@ -97,11 +97,11 @@ def parsecase(net, num_solar=0, num_wind=0, num_batt=0, num_hydro=0, num_therm=0
 
     # Ramp up and down rates (% of rated capacity per minute)
     p["RU"] = {
-        g: 0.50 if g in Gsolar else
-        0.20 if g in Gwind else
-        0.10 if g in Ghydro else
-        1.00 if g in Gbatt else
-        0.02 if gen_types[g] == 'coal' else 0.05
+        g: 0.55 if g in Gsolar else
+        0.25 if g in Gwind else
+        0.12 if g in Ghydro else
+        1.10 if g in Gbatt else
+        0.025 if gen_types[g] == 'coal' else 0.055
         for g in G
     }
     p["RD"] = p["RU"]  # {g: p["RU"][g] for g in G}
@@ -119,9 +119,9 @@ def parsecase(net, num_solar=0, num_wind=0, num_batt=0, num_hydro=0, num_therm=0
 
     # Solar and wind parameters
     if num_solar + num_wind > 0:
-        p["Xs"] = {(o, t): random_range(0.15, 0.22) * random_range(4, 6) for o in O for t in T}
+        p["Xs"] = {(o, t): random_range(0.16, 0.23) * random_range(4, 6) for o in O for t in T}
         p["PXsmax"] = {(g, t, o): p["Xs"][(o, t)] * p["Pmax"][g] for g in Gsolar for t in T for o in O}
-        p["Gam"] = {g: 0.43 for g in Gwind}
+        p["Gam"] = {g: 0.45 for g in Gwind}
 
     # Hydro parameters
     if num_hydro > 0:
@@ -137,12 +137,29 @@ def parsecase(net, num_solar=0, num_wind=0, num_batt=0, num_hydro=0, num_therm=0
         p["Hbase"] = {g: random_range(95, 105) for g in Ghydro}
         p["Ebase"] = {g: random_range(203.12, 217.88) for g in Ghydro}
 
-    p["X"] = {l : net.line.x_ohm_per_km[l - 1] for l in L}
+    # # Demand curve
+    # total_load = net.load['p_mw'].sum()
 
-    p["Xw"] = {(t, o) : 100 * num_wind for t in T for o in O} ###
-    
-    p["Xd"] = {(t, o, d): random_range(0.8, 1.2) * net.load.p_mw[d-1]
-        for t in T for o in O for d in D}
+    # def demand_curve(t):
+    #     base_load = total_load
+    #     peak_factor = 1.3
+    #     off_peak_factor = 0.7
+    #     time_of_day = t % 24
+    #     variation = random.uniform(0.95, 1.05)  # Introduces a small random variation of ±5%
+
+    #     if 9 <= time_of_day <= 20:  # Peak hours
+    #         return base_load * peak_factor * (1 + 0.1 * np.sin(np.pi * time_of_day / 12)) * variation
+    #     else:  # Off-peak hours
+    #         return base_load * off_peak_factor * (1 + 0.1 * np.sin(np.pi * time_of_day / 12)) * variation
+
+    # p["Dd"] = {t: demand_curve(t) for t in T}
+
+    p["X"] = {l: net.line.x_ohm_per_km[l - 1] for l in L}
+
+    p["Xw"] = {(t, o): 100 * num_wind for t in T for o in O}  ###
+
+    p["Xd"] = {(t, o, d): random_range(0.8, 1.2) * net.load.p_mw[d - 1]
+               for t in T for o in O for d in D}
     p["Dd"] = {t: sum(p["Xd"][t, o, d] for d in D for o in O) for t in T}
 
     # Reserve requirements
