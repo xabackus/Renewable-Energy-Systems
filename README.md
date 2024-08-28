@@ -14,6 +14,8 @@ This project focuses on modeling renewable energy systems using Mixed-Integer Li
 
 - **`model.pdf`**: Documentation of the unit commitment model used in this project. This document provides an in-depth explanation of the sets, parameters, variables, objective function, and constraints used in the MILP formulation.
 
+- **`settings.py`**: Illustrates the effect on the solution gap of changing each of Gurobi's cut settings
+
 ## Installation
 To get started with this project, follow these steps:
 
