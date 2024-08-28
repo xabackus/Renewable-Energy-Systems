@@ -11,6 +11,7 @@ import pandapower
 import pandas as pd
 import matplotlib.pyplot as plt
 from pyomo.opt import SolverStatus, TerminationCondition
+import json
 
 net = pandapower.networks.case_ieee30()
 num_solar = int(sys.argv[1])
@@ -43,7 +44,8 @@ if result.solver.status == SolverStatus.ok and result.solver.termination_conditi
         dual_bound = result.problem.lower_bound
         print("primal bound:", primal_bound)
         print("dual bound:", dual_bound)
-        out = {"dual_bound": dual_bound, "primal_bound": primal_bound}
+    with open("data/" + model_name + ".json", "w") as out:
+        out.write(json.dumps({"dual_bound": dual_bound, "primal_bound": primal_bound}))
     print("optimal value:", pyo.value(instance.obj))
 else:
     print("NO OPTIMAL VALUE FOUND")
