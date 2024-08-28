@@ -3,8 +3,9 @@ import random
 import numpy as np
 import pandapower as pp
 
-def parsecase(net, num_solar=0, num_wind=0, num_batt=0, num_hydro=0, num_therm=0, time_periods = 24, num_scenarios = 1, \
-                        num_nodes = 0, num_lines = 0, num_uncert = 1, num_demands = 0):
+
+def parsecase(net, num_solar=0, num_wind=0, num_batt=0, num_hydro=0, num_therm=0, time_periods=24, num_scenarios=1, \
+              num_nodes=0, num_lines=0, num_uncert=1, num_demands=0):
     p = {}
 
     solar_start = 1
@@ -20,7 +21,7 @@ def parsecase(net, num_solar=0, num_wind=0, num_batt=0, num_hydro=0, num_therm=0
     L = range(1, num_lines + 1)
     O = range(1, num_uncert + 1)
     D = range(1, num_demands + 1)
-    
+
     num_renew = num_solar + num_wind
     num_gen = num_renew + num_hydro + num_batt + num_therm
     Gsolar = range(1, num_solar + 1)
@@ -30,7 +31,7 @@ def parsecase(net, num_solar=0, num_wind=0, num_batt=0, num_hydro=0, num_therm=0
     Gtherm = range(num_gen - num_therm + 1, num_gen + 1)
     Grenew = range(1, num_renew + 1)
     G = range(1, num_gen + 1)
-    
+
     # Assign generator types to thermal generators
     therm_types = ['coal', 'ccgt']
     gen_types = {g: random.choice(therm_types) for g in Gtherm}
@@ -38,72 +39,72 @@ def parsecase(net, num_solar=0, num_wind=0, num_batt=0, num_hydro=0, num_therm=0
     # Fixed costs ($/kW)
     p["CF"] = {
         g: random_range(1473.41, 1628.59) if g in Gsolar else
-           random_range(1592.19, 1759.81) if g in Gwind else
-           random_range(3078.93, 3403.07) if g in Ghydro else
-           random_range(1841.09, 2034.91) if g in Gbatt else
-           random_range(3833.23, 4236.77) if gen_types[g] == 'coal' else random_range(1652.02, 1825.98)
-           for g in G
+        random_range(1592.19, 1759.81) if g in Gwind else
+        random_range(3078.93, 3403.07) if g in Ghydro else
+        random_range(1841.09, 2034.91) if g in Gbatt else
+        random_range(3833.23, 4236.77) if gen_types[g] == 'coal' else random_range(1652.02, 1825.98)
+        for g in G
     }
 
     # Variable costs ($/MWh)
     p["CV"] = {
         g: random_range(20.92, 23.08) if g in Gsolar else
-           random_range(30.42, 33.58) if g in Gwind else
-           random_range(87.40, 96.60) if g in Ghydro else
-           random_range(41.79, 46.21) if g in Gbatt else
-           random_range(81.71, 90.29) if gen_types[g] == 'coal' else random_range(37.05, 40.95)
-           for g in G
+        random_range(30.42, 33.58) if g in Gwind else
+        random_range(87.40, 96.60) if g in Ghydro else
+        random_range(41.79, 46.21) if g in Gbatt else
+        random_range(81.71, 90.29) if gen_types[g] == 'coal' else random_range(37.05, 40.95)
+        for g in G
     }
 
     # Start-up costs ($/MW/Start)
     p["CSU"] = {
         g: 0 if g in Grenew else
-           random_range(2.37, 2.63) if g in Ghydro else
-           random_range(9.50, 10.50) if g in Gbatt else
-           random_range(166.25, 183.75) if gen_types[g] == 'coal' else random_range(80.75, 89.25)
-           for g in G
+        random_range(2.37, 2.63) if g in Ghydro else
+        random_range(9.50, 10.50) if g in Gbatt else
+        random_range(166.25, 183.75) if gen_types[g] == 'coal' else random_range(80.75, 89.25)
+        for g in G
     }
 
     # Shut-down costs ($/MW/Stop)
     p["CSD"] = {
         g: 0 if g in Grenew else
-           random_range(2.37, 2.63) if g in Ghydro else
-           random_range(4.75, 5.25) if g in Gbatt else
-           random_range(17.10, 18.90) if gen_types[g] == 'coal' else random_range(8.55, 9.45)
-           for g in G
+        random_range(2.37, 2.63) if g in Ghydro else
+        random_range(4.75, 5.25) if g in Gbatt else
+        random_range(17.10, 18.90) if gen_types[g] == 'coal' else random_range(8.55, 9.45)
+        for g in G
     }
 
     # Scenario probabilities
     p["Pi"] = {s: 1 / len(S) for s in range(1, num_scenarios + 1)}
 
-    # Generator limits (use pandapower s data)
+    # Generator limits 
 
     p["Pmax"] = {
-        g: net.sgen.max_p_mw[g-solar_start] if g in Grenew else
+        g: net.sgen.max_p_mw[g - solar_start] if g in Grenew else
         #    net.hydro.max_p_mw[g-hydro_start] if g in Ghydro else
-           net.storage.max_p_mw[g-batt_start] if g in Gbatt else
-           net.gen.max_p_mw[g-therm_start]
-           for g in G
+        net.storage.max_p_mw[g - batt_start] if g in Gbatt else
+        net.gen.max_p_mw[g - therm_start]
+        for g in G
     }
-    
+
     p["Pmin"] = {
-        g: net.sgen.min_p_mw[g-solar_start] if g in Grenew else
+        g: net.sgen.min_p_mw[g - solar_start] if g in Grenew else
         #    net.hydro.min_p_mw[g-hydro_start] if g in Ghydro else
-           net.storage.min_p_mw[g-batt_start] if g in Gbatt else
-           net.gen.min_p_mw[g-therm_start]
-           for g in G
+        net.storage.min_p_mw[g - batt_start] if g in Gbatt else
+        net.gen.min_p_mw[g - therm_start]
+        for g in G
     }
 
     # Ramp up and down rates (% of rated capacity per minute)
     p["RU"] = {
         g: 0.50 if g in Gsolar else
-           0.20 if g in Gwind else
-           0.10 if g in Ghydro else
-           1.00 if g in Gbatt else
-           0.02 if gen_types[g] == 'coal' else 0.05
-           for g in G
+        0.20 if g in Gwind else
+        0.10 if g in Ghydro else
+        1.00 if g in Gbatt else
+        0.02 if gen_types[g] == 'coal' else 0.05
+        for g in G
     }
-    p["RD"] = p["RU"] # {g: p["RU"][g] for g in G}
+    p["RD"] = p["RU"]  # {g: p["RU"][g] for g in G}
 
     # Battery parameters
     if num_batt > 0:
@@ -138,15 +139,18 @@ def parsecase(net, num_solar=0, num_wind=0, num_batt=0, num_hydro=0, num_therm=0
 
     # Demand curve
     total_load = net.load['p_mw'].sum()
+
     def demand_curve(t):
         base_load = total_load
         peak_factor = 1.3
         off_peak_factor = 0.7
         time_of_day = t % 24
+        variation = random.uniform(0.95, 1.05)  # Introduces a small random variation of ±5%
+
         if 9 <= time_of_day <= 20:  # Peak hours
-            return base_load * peak_factor * (1 + 0.1 * np.sin(np.pi * time_of_day / 12))
+            return base_load * peak_factor * (1 + 0.1 * np.sin(np.pi * time_of_day / 12)) * variation
         else:  # Off-peak hours
-            return base_load * off_peak_factor * (1 + 0.1 * np.sin(np.pi * time_of_day / 12))
+            return base_load * off_peak_factor * (1 + 0.1 * np.sin(np.pi * time_of_day / 12)) * variation
 
     p["Dd"] = {t: demand_curve(t) for t in T}
 
@@ -161,14 +165,14 @@ def parsecase(net, num_solar=0, num_wind=0, num_batt=0, num_hydro=0, num_therm=0
     p["Rdn"] = {t: reserve_requirement(t) for t in T}
 
     # Thermal generator parameters here
-    k = .5 # calibrate # RU/RD 1/2 of Pmax/min for thermal
-    
-    p["Fmax"] = {l : 250 for l in L}
+    k = .5  # calibrate # RU/RD 1/2 of Pmax/min for thermal
 
-    p["SU"] = {g : k * p["Pmax"][g]/2 for g in Gtherm} ### k * RU/D
-    p["SD"] = {g : k * p["Pmin"][g]/2 for g in Gtherm} ###
-    p["UT"] = {g : 6 for g in Gtherm} # or 12
-    p["DT"] = {g : 6 for g in Gtherm} # or 12
+    p["Fmax"] = {l: 250 for l in L}
+
+    p["SU"] = {g: k * p["Pmax"][g] / 2 for g in Gtherm}  ### k * RU/D
+    p["SD"] = {g: k * p["Pmin"][g] / 2 for g in Gtherm}  ###
+    p["UT"] = {g: 6 for g in Gtherm}  # or 12
+    p["DT"] = {g: 6 for g in Gtherm}  # or 12
 
     p["Lg"] = {(g, i): 0 for g in G for i in N}
     for g in G:
@@ -176,52 +180,54 @@ def parsecase(net, num_solar=0, num_wind=0, num_batt=0, num_hydro=0, num_therm=0
             net.sgen.bus[g - solar_start] if g in Grenew else
             net.hydro.bus[g - hydro_start] if g in Ghydro else
             net.storage.bus[g - batt_start] if g in Gbatt else
-            net.gen.bus[g - therm_start] 
-                ) + 1)] = 1
+            net.gen.bus[g - therm_start]
+        ) + 1)] = 1
     p["Ll"] = {(l, i): 0 for l in L for i in N}
     for l in L:
         p["Ll"][(l, net.line.from_bus[l - 1] + 1)] = 1
         p["Ll"][(l, net.line.to_bus[l - 1] + 1)] = -1
 
     p["Ld"] = {(d, i): 0 for d in D for i in N}
-    
+
     for d in D:
         p["Ld"][(d, net.load.bus[d - 1] + 1)] = 1
 
-    p["Dl"] = {d : 1 / num_demands for d in D}
-    
+    p["Dl"] = {d: 1 / num_demands for d in D}
+
     p["Dt"] = {None: 1}
 
-    p["X"] = {l : net.line.x_ohm_per_km[l - 1] for l in L}
+    p["X"] = {l: net.line.x_ohm_per_km[l - 1] for l in L}
 
-    p["Xw"] = {(t, o) : 100 * num_wind for t in T for o in O} ###
-    p["Xd"] = {(t, o) : 100 * num_batt for t in T for o in O} ###
-    
-    return pickle.dumps({None: p})  
+    p["Xw"] = {(t, o): 100 * num_wind for t in T for o in O}  ###
+    p["Xd"] = {(t, o): 100 * num_batt for t in T for o in O}  ###
+
+    return pickle.dumps({None: p})
+
 
 def random_range(min_val, max_val):
     return min_val + random.random() * (max_val - min_val)
 
-def add_gens_to_case(net, num_solar=0, num_wind=0, num_batt=0):
 
+def add_gens_to_case(net, num_solar=0, num_wind=0, num_batt=0):
     for _ in range(num_solar):
         bus = pp.get_free_id(net.bus)
         pp.create_bus(net, vn_kv=net.bus.vn_kv.mean())
         pp.create_sgen(net, bus, min_p_mw=0, max_p_mw=30, p_mw=30, q_mvar=0, name="Solar", type="PV")
         pp.create_line(net, from_bus=pp.get_free_id(net.bus) % len(net.bus), to_bus=bus, length_km=5,
                        std_type="N2XS(FL)2Y 1x300 RM/35 64/110 kV")
-        
+
     for _ in range(num_wind):
         bus = pp.get_free_id(net.bus)
         pp.create_bus(net, vn_kv=net.bus.vn_kv.mean())
         pp.create_sgen(net, bus, min_p_mw=0, max_p_mw=50, p_mw=50, q_mvar=0, name="Wind", type="WP")
         pp.create_line(net, from_bus=pp.get_free_id(net.bus) % len(net.bus), to_bus=bus, length_km=10,
                        std_type="N2XS(FL)2Y 1x300 RM/35 64/110 kV")
-        
+
     for _ in range(num_batt):
         bus = pp.get_free_id(net.bus)
         pp.create_bus(net, vn_kv=net.bus.vn_kv.mean())
-        pp.create_storage(net, bus, min_e_mwh=0, max_e_mwh=20, min_p_mw=0, max_p_mw=20, p_mw=20, q_mvar=0, name="Battery", type="BT")
+        pp.create_storage(net, bus, min_e_mwh=0, max_e_mwh=20, min_p_mw=0, max_p_mw=20, p_mw=20, q_mvar=0,
+                          name="Battery", type="BT")
         pp.create_line(net, from_bus=pp.get_free_id(net.bus) % len(net.bus), to_bus=bus, length_km=5,
                        std_type="N2XS(FL)2Y 1x300 RM/35 64/110 kV")
     
