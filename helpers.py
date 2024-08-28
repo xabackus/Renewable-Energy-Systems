@@ -38,10 +38,10 @@ def parsecase(net, num_solar=0, num_wind=0, num_batt=0, num_hydro=0, num_therm=0
 
     # Fixed costs ($/kW)
     p["CapEx"] = {
-        g: random_range(1400, 1500) if g in Gsolar else  # slightly reduced
-        random_range(1500, 1600) if g in Gwind else  # slightly reduced
-        random_range(2900, 3100) if g in Ghydro else  # slightly reduced
-        random_range(1700, 1900) if g in Gbatt else  # slightly reduced
+        g: random_range(1400, 1500) if g in Gsolar else  
+        random_range(1500, 1600) if g in Gwind else  
+        random_range(2900, 3100) if g in Ghydro else  
+        random_range(1700, 1900) if g in Gbatt else  
         random_range(3800, 4200) if gen_types[g] == 'coal' else random_range(1600, 1800)
         for g in G
     }
