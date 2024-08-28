@@ -30,7 +30,7 @@ Ensure you have Python installed, and then install the necessary dependencies:
 ### Generating and Solving Models
 To generate and solve an optimization model:
 1. Run the command
-`example.py [num_solar] [num_wind] [num_hydro] [num_batt] [num_therm]`
+`./example.py [num_solar] [num_wind] [num_hydro] [num_batt] [num_therm]`
 Currently, the model generator only supports the standard IEEE 30-bus system with 5 thermal generators and can add any number of solar, wind and battery generators on top of it.
 2. The model and data will be saved into the "UCmodel.mps" and "UCdata.p" files.
 3. Edit `solver.py` to solve the model with your preferred solver (after editing, run the solver with `python solver.py`). If you want to change Gurobi's cut settings, you can do it here.

@@ -55,7 +55,7 @@ def get_parameters(model):
     PTDF[n, l] = Power Transfer Distribution Factor for node n and line l
     # Xs[t, o] = realized solar power availability for scenario w and time t
     Xw[t, o] = realized wind power availability for scenario w and time t
-    Xd[t, o] = realized electric demand for scenario w and time t
+    Xd[t, o, d] = realized electric demand for scenario w and time t
     PXsmax[g, t, o] = max available power from solar generator g based on realized solar availability
     Gam[g] = wind distribution factor for wind generator g
     SU[g], SD[g] = start-up and shut-down rates of generator g
@@ -96,7 +96,7 @@ def get_parameters(model):
     model.PTDF = Param(model.N, model.L)
     # model.Xs = Param(model.T, model.O)
     model.Xw = Param(model.T, model.O)
-    model.Xd = Param(model.T, model.O)
+    model.Xd = Param(model.T, model.O, model.D)
     model.PXsmax = Param(model.Gsolar, model.T, model.O)
     model.Gam = Param(model.Gwind)
     model.SU = Param(model.G)
@@ -285,14 +285,13 @@ def get_power_DCPF_constraints(model):
     def nodal_balance(model, t, s, o, i):
         # Summing contributions from all generator types
         thermal_gen = sum(model.Lg[g, i] * (model.p[g, t, s] + model.ps[g, t, s, o]) for g in model.Gtherm)
-        renewable_gen = sum(model.Lg[g, i] * model.p[g, t, s] for g in model.Gsolar) + \
-                        sum(model.Lg[g, i] * model.p[g, t, s] for g in model.Gwind)
+        renewable_gen = sum(model.Lg[g, i] * model.p[g, t, s] for g in model.Grenew)
         hydro_gen = sum(model.Lg[g, i] * model.p[g, t, s] for g in model.Ghydro)
         battery_gen = sum(model.Lg[g, i] * (model.pdchg[g, t, s] - model.pchg[g, t, s]) for g in model.Gbatt)
 
         total_generation = thermal_gen + renewable_gen + hydro_gen + battery_gen
         total_flow = sum(model.Ll[l, i] * model.f[l, t, s, o] for l in model.L)
-        total_demand = sum(model.Ld[d, i] * (model.Dl[d] * model.Xd[t, o] - model.uD[d, t, s, o]) for d in model.D)
+        total_demand = sum(model.Ld[d, i] * (model.Dl[d] * model.Xd[t, o, d] - model.uD[d, t, s, o]) for d in model.D)
 
         return total_generation - total_flow == total_demand
 
@@ -311,7 +310,7 @@ def get_power_DCPF_constraints(model):
         battery_balance = sum((model.pdchg[g, t, s] - model.pchg[g, t, s]) for g in model.Gbatt)
         return gen_balance + battery_balance == model.Dd[t]
 
-    # model.nodalbalance = Constraint(model.T, model.S, model.O, model.N, rule=nodal_balance)
+    model.nodalbalance = Constraint(model.T, model.S, model.O, model.N, rule=nodal_balance)
     model.dcflow = Constraint(model.L, model.T, model.S, model.O, rule=dc_flow)
     model.transmissionmin = Constraint(model.L, model.T, model.S, model.O, rule=transmission_min)
     model.transmissionmax = Constraint(model.L, model.T, model.S, model.O, rule=transmission_max)
