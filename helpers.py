@@ -36,7 +36,7 @@ def parsecase(net, num_solar=0, num_wind=0, num_batt=0, num_hydro=0, num_therm=0
     gen_types = {g: random.choice(therm_types) for g in Gtherm}
 
     # Fixed costs ($/kW)
-    p["CF"] = {
+    p["CapEx"] = {
         g: random_range(1473.41, 1628.59) if g in Gsolar else
            random_range(1592.19, 1759.81) if g in Gwind else
            random_range(3078.93, 3403.07) if g in Ghydro else
@@ -46,7 +46,7 @@ def parsecase(net, num_solar=0, num_wind=0, num_batt=0, num_hydro=0, num_therm=0
     }
 
     # Variable costs ($/MWh)
-    p["CV"] = {
+    p["OpEx"] = {
         g: random_range(20.92, 23.08) if g in Gsolar else
            random_range(30.42, 33.58) if g in Gwind else
            random_range(87.40, 96.60) if g in Ghydro else
@@ -137,18 +137,28 @@ def parsecase(net, num_solar=0, num_wind=0, num_batt=0, num_hydro=0, num_therm=0
         p["Ebase"] = {g: random_range(203.12, 217.88) for g in Ghydro}
 
     # Demand curve
-    total_load = net.load['p_mw'].sum()
-    def demand_curve(t):
-        base_load = total_load
-        peak_factor = 1.3
-        off_peak_factor = 0.7
-        time_of_day = t % 24
-        if 9 <= time_of_day <= 20:  # Peak hours
-            return base_load * peak_factor * (1 + 0.1 * np.sin(np.pi * time_of_day / 12))
-        else:  # Off-peak hours
-            return base_load * off_peak_factor * (1 + 0.1 * np.sin(np.pi * time_of_day / 12))
+    # total_load = net.load['p_mw'].sum()
+    # def demand_curve(t):
+    #     base_load = total_load
+    #     peak_factor = 1.3
+    #     off_peak_factor = 0.7
+    #     time_of_day = t % 24
+    #     if 9 <= time_of_day <= 20:  # Peak hours
+    #         return base_load * peak_factor * (1 + 0.1 * np.sin(np.pi * time_of_day / 12))
+    #     else:  # Off-peak hours
+    #         return base_load * off_peak_factor * (1 + 0.1 * np.sin(np.pi * time_of_day / 12))
 
-    p["Dd"] = {t: demand_curve(t) for t in T}
+    # p["Dd"] = {t: demand_curve(t) for t in T}
+
+
+    p["X"] = {l : net.line.x_ohm_per_km[l - 1] for l in L}
+
+    p["Xw"] = {(t, o) : 100 * num_wind for t in T for o in O} ###
+    # p["Xd"] = {(t, o) : 100 * num_batt for t in T for o in O} ###
+    
+    p["Xd"] = {(t, o, d): random_range(0.8, 1.2) * net.load.p_mw[d-1] 
+        for t in T for o in O for d in D}
+    p["Dd"] = {t: sum(p["Xd"][t, o, d] for d in D for o in O) for t in T}
 
     # Reserve requirements
     def reserve_requirement(t):
@@ -191,11 +201,6 @@ def parsecase(net, num_solar=0, num_wind=0, num_batt=0, num_hydro=0, num_therm=0
     p["Dl"] = {d : 1 / num_demands for d in D}
     
     p["Dt"] = {None: 1}
-
-    p["X"] = {l : net.line.x_ohm_per_km[l - 1] for l in L}
-
-    p["Xw"] = {(t, o) : 100 * num_wind for t in T for o in O} ###
-    p["Xd"] = {(t, o) : 100 * num_batt for t in T for o in O} ###
     
     return pickle.dumps({None: p})  
 

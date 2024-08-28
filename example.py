@@ -8,9 +8,10 @@ import matplotlib.pyplot as plt
 from pyomo.opt import SolverStatus, TerminationCondition
 
 net = pandapower.networks.case_ieee30()
-num_solar = 10
+num_solar = 3
+
 # Usage
-add_gens_to_case(net, num_solar, 10, 20)
+add_gens_to_case(net, num_solar, 2, 5)
 
 # single helper function so that the kwargs are the same
 kwargs = {'num_solar': num_solar, 'num_wind':  len(net.sgen) - num_solar, 'num_hydro': 0, 'num_batt': len(net.storage), 'num_therm': len(net.gen), 'num_nodes': len(net.bus), 'num_lines': len(net.line), 'time_periods': 24, 'num_scenarios': 1, 'num_uncert': 1, 'num_demands': len(net.load)}
@@ -55,7 +56,7 @@ df = pd.DataFrame({
     'solar': [sum(pyo.value(instance.p[g, t, s]) for g in Gsolar for s in range(1, kwargs['num_scenarios'] + 1)) for t in range(1, kwargs['time_periods'] + 1)],
     'wind': [sum(pyo.value(instance.p[g, t, s]) for g in Gwind for s in range(1, kwargs['num_scenarios'] + 1)) for t in range(1, kwargs['time_periods'] + 1)],
     'hydro': [sum(pyo.value(instance.p[g, t, s]) for g in Ghydro for s in range(1, kwargs['num_scenarios'] + 1)) for t in range(1, kwargs['time_periods'] + 1)],
-    'battery': [sum(pyo.value(instance.p[g, t, s]) for g in Gbatt for s in range(1, kwargs['num_scenarios'] + 1)) for t in range(1, kwargs['time_periods'] + 1)],
+    'battery': [sum(pyo.value(instance.pchg[g, t, s] + instance.pdchg[g, t, s]) for g in Gbatt for s in range(1, kwargs['num_scenarios'] + 1)) for t in range(1, kwargs['time_periods'] + 1)],
     })
 
 ax = df.plot.area(stacked=True)
