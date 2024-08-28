@@ -233,7 +233,6 @@ def add_gens_to_case(net, num_solar=0, num_wind=0, num_batt=0):
         bus = pp.get_free_id(net.bus)
         pp.create_bus(net, vn_kv=net.bus.vn_kv.mean())
         pp.create_storage(net, bus, min_e_mwh=0, max_e_mwh=20, min_p_mw=0, max_p_mw=80, p_mw=20, q_mvar=0,
-        pp.create_storage(net, bus, min_e_mwh=0, max_e_mwh=20, min_p_mw=0, max_p_mw=80, p_mw=20, q_mvar=0,
                           name="Battery", type="BT")
         pp.create_line(net, from_bus=pp.get_free_id(net.bus) % len(net.bus), to_bus=bus, length_km=5,
                        std_type="N2XS(FL)2Y 1x300 RM/35 64/110 kV")

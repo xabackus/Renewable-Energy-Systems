@@ -68,5 +68,5 @@ df = pd.DataFrame({
     'hydro': [sum(pyo.value(instance.p[g, t, s]) for g in Ghydro for s in range(1, kwargs['num_scenarios'] + 1)) for t in range(1, kwargs['time_periods'] + 1)],
     'battery': [sum(pyo.value(instance.p[g, t, s]) for g in Gbatt for s in range(1, kwargs['num_scenarios'] + 1)) for t in range(1, kwargs['time_periods'] + 1)],
     })
-ax = df.plot.area(stacked=True)
+ax = df.plot.area(xlabel="Time", ylabel="Power", stacked=True)
 plt.show()

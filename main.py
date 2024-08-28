@@ -310,7 +310,7 @@ def get_power_DCPF_constraints(model):
         battery_balance = sum((model.pdchg[g, t, s] - model.pchg[g, t, s]) for g in model.Gbatt)
         return gen_balance + battery_balance == model.Dd[t]
 
-    model.nodalbalance = Constraint(model.T, model.S, model.O, model.N, rule=nodal_balance)
+    # model.nodalbalance = Constraint(model.T, model.S, model.O, model.N, rule=nodal_balance)
     model.dcflow = Constraint(model.L, model.T, model.S, model.O, rule=dc_flow)
     model.transmissionmin = Constraint(model.L, model.T, model.S, model.O, rule=transmission_min)
     model.transmissionmax = Constraint(model.L, model.T, model.S, model.O, rule=transmission_max)
