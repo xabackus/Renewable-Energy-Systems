@@ -14,6 +14,8 @@ from pyomo.opt import SolverStatus, TerminationCondition
 import json
 
 net = pandapower.networks.case_ieee30()
+original_therm = len(net.gen)
+
 num_solar = int(sys.argv[1])
 num_wind = int(sys.argv[2])
 num_hydro = int(sys.argv[3])
@@ -23,17 +25,50 @@ num_therm = int(sys.argv[5])
 
 
 # Usage
-add_gens_to_case(net, num_solar, num_wind, num_batt)
+net = add_gens_to_case(net, num_solar, num_wind, num_batt, num_hydro, num_therm)
 
 # single helper function so that the kwargs are the same
-kwargs = {'num_solar': num_solar, 'num_wind':  len(net.sgen) - num_solar, 'num_hydro': 0, 'num_batt': len(net.storage), 'num_therm': len(net.gen), 'num_nodes': len(net.bus), 'num_lines': len(net.line), 'time_periods': 24, 'num_scenarios': 1, 'num_uncert': 1, 'num_demands': len(net.load)}
-model_name = "UCModel" + "_".join([key + "=" + str(kwargs[key]) for key in kwargs])
-db = parsecase(net, **kwargs, model_name=model_name)
-data = pickle.loads(db)
-model = ucml.opt_model_generator(**kwargs)
+kwargs = {'num_solar': num_solar, 
+          'num_wind':  num_wind, 
+          'num_hydro': num_hydro, 
+          'num_batt': len(net.storage), 
+          'num_therm': num_therm, 
+          'num_nodes': len(net.bus), 
+          'num_lines': len(net.line), 
+          'time_periods': 24, 
+          'num_scenarios': 1, 
+          'num_uncert': 1, 
+          'num_demands': len(net.load)}
+
+
+db = parsecase(net, **kwargs)
+
+with open("UCdata.p", "rb") as f:
+    p_data = pickle.loads(pickle.load(f))  
+
+
+from main import opt_model_generator  
+
+opt_model_kwargs['num_existing_therm'] = original_therm
+opt_model_kwargs = {
+    'num_solar': num_solar,
+    'num_wind': num_wind,
+    'num_hydro': num_hydro,
+    'num_batt': num_batt,
+    'num_existing_therm': original_therm,
+    'num_therm': num_therm,
+    'num_nodes': len(net.bus),
+    'num_lines': len(net.line),
+    'time_periods': 24,
+    'num_scenarios': 1,
+    'num_uncert': 1,
+    'num_demands': len(net.load)
+}
+
+model = opt_model_generator(**opt_model_kwargs)
 # model.pprint()
 
-instance = model.create_instance(data)
+instance = model.create_instance(data=p_data)
 # make into MPS file
 instance.write("data/" + model_name + ".mps")
 
@@ -52,14 +87,18 @@ else:
     print("NO OPTIMAL VALUE FOUND")
 
 # make a file with output json file, with name
-num_renew = num_solar + kwargs['num_wind']
-num_gen = num_renew + kwargs['num_hydro'] + kwargs['num_batt'] + kwargs['num_therm']
-Gsolar = range(1, num_solar + 1)
-Gwind = range(num_solar + 1, num_solar + kwargs['num_wind'] + 1)
-Ghydro = range(num_renew + 1, num_renew + kwargs['num_hydro'] + 1)
-Gbatt = range(num_renew + kwargs['num_hydro'] + 1, num_gen - kwargs['num_therm'] + 1)
-Gtherm = range(num_gen - kwargs['num_therm'] + 1, num_gen + 1)
-Grenew = range(1, num_renew + 1)    
+# Extract and Plot Results
+num_renew = num_solar + num_wind
+num_gen = num_renew + num_hydro + num_batt + num_therm
+
+# Define generator groups based on unique IDs
+Gtherm = range(1, num_therm + 1)
+Ghydro = range(num_therm + 1, num_therm + num_hydro + 1)
+Gsolar = range(num_therm + num_hydro + 1, num_therm + num_hydro + num_solar + 1)
+Gwind = range(num_therm + num_hydro + num_solar + 1, num_therm + num_hydro + num_solar + num_wind + 1)
+Gbatt = range(num_therm + num_hydro + num_solar + num_wind + 1, num_gen + 1)
+Grenew = list(Gsolar) + list(Gwind)
+G = list(Gtherm) + list(Ghydro) + list(Gsolar) + list(Gwind) + list(Gbatt)  
 
 df = pd.DataFrame({
     'thermal': [sum(pyo.value(instance.p[g, t, s]) for g in Gtherm for s in range(1, kwargs['num_scenarios'] + 1)) for t in range(1, kwargs['time_periods'] + 1)],
@@ -67,6 +106,10 @@ df = pd.DataFrame({
     'wind': [sum(pyo.value(instance.p[g, t, s]) for g in Gwind for s in range(1, kwargs['num_scenarios'] + 1)) for t in range(1, kwargs['time_periods'] + 1)],
     'hydro': [sum(pyo.value(instance.p[g, t, s]) for g in Ghydro for s in range(1, kwargs['num_scenarios'] + 1)) for t in range(1, kwargs['time_periods'] + 1)],
     'battery': [sum(pyo.value(instance.p[g, t, s]) for g in Gbatt for s in range(1, kwargs['num_scenarios'] + 1)) for t in range(1, kwargs['time_periods'] + 1)],
-    })
-ax = df.plot.area(xlabel="Time", ylabel="Power", stacked=True)
+})
+ax = df.plot.area(stacked=True)
+plt.xlabel('Time Period')
+plt.ylabel('Power Output (MW)')
+plt.title('Unit Commitment Results')
+plt.legend(title='Generator Type')
 plt.show()
