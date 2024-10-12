@@ -44,15 +44,12 @@ def parsecase(net, num_solar=0, num_wind=0, num_batt=0, num_hydro=0, num_therm=0
     # All Generators
     G = Gtherm + Ghydro + Gsolar + Gwind + Gbatt
 
-
     T = range(1, time_periods + 1)
     S = range(1, num_scenarios + 1)
     N = range(1, num_nodes + 1)
     L = range(1, num_lines + 1)
     O = range(1, num_uncert + 1)
     D = range(1, num_demands + 1)
-
-    
 
     # Assign generator types to thermal generators
     therm_types = ['coal', 'ccgt']
@@ -142,7 +139,7 @@ def parsecase(net, num_solar=0, num_wind=0, num_batt=0, num_hydro=0, num_therm=0
         p["Hdchg"] = {g: random_range(0.90, 0.95) for g in Gbatt}
         p["SoCmin"] = {g: random_range(0.10, 0.20) for g in Gbatt}
         p["SoCmax"] = {g: random_range(0.90, 0.95) for g in Gbatt}
-        p["Ecap"] = {g: random_range(1.92, 2.10) for g in Gbatt}
+        p["Ecap"] = {g: 100 for g in Gbatt}  
         p["DODmax"] = {g: random_range(0.80, 0.90) for g in Gbatt}
 
     # Solar and wind parameters
@@ -161,29 +158,26 @@ def parsecase(net, num_solar=0, num_wind=0, num_batt=0, num_hydro=0, num_therm=0
         p["Gam"] = {g: 0.45 for g in Gwind}
 
     # Hydro parameters
-    if len(Ghydro) > 0:
-        p["H"] = {g: random_range(0.85, 0.95) for g in Ghydro}  # Efficiency of hydro generators
+        if len(Ghydro) > 0:
+        p["H"] = {g: 9.81 * 1000 * 0.9 for g in Ghydro}  # Assuming ρ=1000 kg/m³ and η=90%
         p["Smax"] = {g: random_range(276.0, 304.5) for g in Ghydro}  # Make sure this line is present
 
-        p["Qmin"] = {g: random_range(16.63, 18.40) for g in Ghydro}
-        p["Qmax"] = {g: random_range(190, 210) for g in Ghydro}
-        p["A"] = {g: random_range(0.84, 0.92) for g in Ghydro}
-        p["B"] = {g: random_range(0.76, 0.84) for g in Ghydro}
-        p["Inflow"] = {
-            (g, t, s): random_range(118.75, 131.25)
-            for g in Ghydro
-            for t in range(1, time_periods + 1)
-            for s in range(1, num_scenarios + 1)
-        }
-        p["Emax"] = {g: random_range(218.5, 241.5) for g in Ghydro}
-        p["Emin"] = {g: random_range(180.5, 199.5) for g in Ghydro}
-        p["Smax"] = {g: random_range(276.0, 304.5) for g in Ghydro}
-        p["Hbase"] = {g: random_range(95, 105) for g in Ghydro}
-        p["Ebase"] = {g: random_range(203.12, 217.88) for g in Ghydro}
-    
+        p["Hbase"] = {g: 110 for g in Ghydro}
+        p["Emin"] = {g: 180 for g in Ghydro}
+        p["Emax"] = {g: 220 for g in Ghydro}
+        p["Ebase"] = {g: 190 for g in Ghydro}
+        p["A"] = {g: 0.02 for g in Ghydro}
+        p["B"] = {g: 0.009 for g in Ghydro}
+        p["Qmin"] = {g: 15 for g in Ghydro}
+        p["Qmax"] = {g: 200 for g in Ghydro}
+        p["Inflow"] = {(g, t, s): 120 for g in Ghydro for t in range(1, time_periods + 1) for s in
+                       range(1, num_scenarios + 1)}
+
+    # Initialize Einit and Efinal for Hydro Generators
     p["Einit"] = {g: random_range(200, 220) for g in Ghydro}  # Example initial reservoir levels
     p["Efinal"] = {g: p["Einit"][g] for g in
                    Ghydro}  # Example final reservoir levels (can be set differently if needed)
+
 
     # Demand curve
     total_load = net.load['p_mw'].sum()
@@ -215,21 +209,7 @@ def parsecase(net, num_solar=0, num_wind=0, num_batt=0, num_hydro=0, num_therm=0
     # p["Dd"] = {t: demand_curve(t) for t in T}
 
 
-    # Wind and Battery uncertainty
-    p["Xw"] = {
-        (t, o): 100 * len(Gwind)
-        for t in range(1, time_periods + 1)
-        for o in range(1, num_uncert + 1)
-    }
-    p["Xd"] = {
-        (t, o): 100 * len(Gbatt)
-        for t in range(1, time_periods + 1)
-        for o in range(1, num_uncert + 1)
-    }
-
-    
-    # Reserve requirements
-    def reserve_requirement(t):
+        def reserve_requirement(t):
         base_reserve = 0.03 * p["Dd"][t]  # 3% of demand as base reserve
         renewable_capacity = sum(p["Pmax"][g] for g in Grenew)
         additional_reserve = 0.05 * renewable_capacity  # Additional 5% of renewable capacity
@@ -237,6 +217,7 @@ def parsecase(net, num_solar=0, num_wind=0, num_batt=0, num_hydro=0, num_therm=0
 
     p["Rup"] = {t: reserve_requirement(t) for t in range(1, time_periods + 1)}
     p["Rdn"] = {t: reserve_requirement(t) for t in range(1, time_periods + 1)}
+
 
 
     # Thermal generator parameters here
@@ -263,7 +244,6 @@ def parsecase(net, num_solar=0, num_wind=0, num_batt=0, num_hydro=0, num_therm=0
         for n in range(1, num_nodes + 1):
             p["Lg"][(g, n)] = 1 if n == bus else 0  # Ensure no extra +1
 
-                
     p["Ll"] = {}
     for l in range(1, num_lines + 1):
         from_bus = net.line.at[l - 1, 'from_bus'] + 1
@@ -287,7 +267,21 @@ def parsecase(net, num_solar=0, num_wind=0, num_batt=0, num_hydro=0, num_therm=0
     p["Dl"] = {d: 1 / num_demands for d in range(1, num_demands + 1)}
     p["Dt"] = {None: 1}
                 
+    p["line_from"] = {l: net.line.at[l - 1, 'from_bus'] + 1 for l in range(1, num_lines + 1)}
+    p["line_to"] = {l: net.line.at[l - 1, 'to_bus'] + 1 for l in range(1, num_lines + 1)}
     p["X"] = {l: net.line.at[l - 1, 'x_ohm_per_km'] * net.line.at[l - 1, 'length_km'] for l in range(1, num_lines + 1)}
+
+    # Wind and Battery uncertainty
+    p["Xw"] = {
+        (t, o): 100 * len(Gwind)
+        for t in range(1, time_periods + 1)
+        for o in range(1, num_uncert + 1)
+    }
+    p["Xd"] = {
+        (t, o): 100 * len(Gbatt)
+        for t in range(1, time_periods + 1)
+        for o in range(1, num_uncert + 1)
+    }
 
     # Extract Slack Bus ID
     slack_ext_grid = net.ext_grid[net.ext_grid.type == 'slack']
@@ -299,10 +293,11 @@ def parsecase(net, num_solar=0, num_wind=0, num_batt=0, num_hydro=0, num_therm=0
         slack_bus = slack_ext_grid.at[slack_ext_grid.index[0], 'bus'] + 1  # 1-based indexing
         p["slack_bus"] = slack_bus
 
-                
+    # Serialize data
     data = pickle.dumps({None: p})
     with open("UCdata.p", "wb") as f:
         pickle.dump(data, f)
+
     return data
 
 def random_range(min_val, max_val):
@@ -324,9 +319,9 @@ def add_gens_to_case(net, num_solar, num_wind, num_batt, num_hydro, num_thermal)
     - Modified pandapower network object with generators added in specific order.
     """
     # Get list of buses
+    # Get list of buses
     buses = net.bus.index.tolist()
     net = add_dummy_loads(net)
-
 
     # Ensure we have a slack bus
     if 'type' not in net.ext_grid.columns or 'slack' not in net.ext_grid['type'].values:
