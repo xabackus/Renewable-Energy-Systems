@@ -28,34 +28,11 @@ num_therm = int(sys.argv[5])
 net = add_gens_to_case(net, num_solar, num_wind, num_batt, num_hydro, num_therm)
 
 # single helper function so that the kwargs are the same
-kwargs = {'num_solar': num_solar, 
-          'num_wind':  num_wind, 
-          'num_hydro': num_hydro, 
-          'num_batt': len(net.storage), 
-          'num_therm': num_therm, 
-          'num_nodes': len(net.bus), 
-          'num_lines': len(net.line), 
-          'time_periods': 24, 
-          'num_scenarios': 1, 
-          'num_uncert': 1, 
-          'num_demands': len(net.load)}
-
-
-db = parsecase(net, **kwargs)
-
-with open("UCdata.p", "rb") as f:
-    p_data = pickle.loads(pickle.load(f))  
-
-
-from main import opt_model_generator  
-
-opt_model_kwargs['num_existing_therm'] = original_therm
-opt_model_kwargs = {
+kwargs = {
     'num_solar': num_solar,
     'num_wind': num_wind,
     'num_hydro': num_hydro,
     'num_batt': num_batt,
-    'num_existing_therm': original_therm,
     'num_therm': num_therm,
     'num_nodes': len(net.bus),
     'num_lines': len(net.line),
@@ -65,6 +42,40 @@ opt_model_kwargs = {
     'num_demands': len(net.load)
 }
 
+
+db = parsecase(net, **kwargs)
+
+with open("UCdata.p", "rb") as f:
+    p_data = pickle.loads(pickle.load(f))  
+
+slack_bus = p_data[None].get("slack_bus")
+
+from main import opt_model_generator  
+
+opt_model_kwargs = kwargs.copy()
+
+num_existing_therm = original_therm
+opt_model_kwargs['num_existing_therm'] = num_existing_therm
+
+slack_bus = p_data[None].get("slack_bus")
+
+
+opt_model_kwargs = {
+    'num_solar': num_solar,
+    'num_wind': num_wind,
+    'num_hydro': num_hydro,
+    'num_batt': num_batt,
+    'num_existing_therm': num_existing_therm,
+    'num_therm': num_therm,
+    'num_nodes': len(net.bus),
+    'num_lines': len(net.line),
+    'time_periods': 24,
+    'num_scenarios': 1,
+    'num_uncert': 1,
+    'num_demands': len(net.load),
+    'slack_bus_id': slack_bus
+}
+
 model = opt_model_generator(**opt_model_kwargs)
 # model.pprint()
 
@@ -72,8 +83,9 @@ instance = model.create_instance(data=p_data)
 # make into MPS file
 instance.write("data/" + model_name + ".mps")
 
-opt = pyo.SolverFactory('gurobi')
-result = opt.solve(instance, tee=False)
+solver = pyo.SolverFactory('gurobi')
+result = solver.solve(instance, tee=False)
+
 if result.solver.status == SolverStatus.ok and result.solver.termination_condition == TerminationCondition.optimal:
     if hasattr(result.problem, 'upper_bound') and hasattr(result.problem, 'lower_bound'):
         primal_bound = result.problem.upper_bound
@@ -98,7 +110,8 @@ Gsolar = range(num_therm + num_hydro + 1, num_therm + num_hydro + num_solar + 1)
 Gwind = range(num_therm + num_hydro + num_solar + 1, num_therm + num_hydro + num_solar + num_wind + 1)
 Gbatt = range(num_therm + num_hydro + num_solar + num_wind + 1, num_gen + 1)
 Grenew = list(Gsolar) + list(Gwind)
-G = list(Gtherm) + list(Ghydro) + list(Gsolar) + list(Gwind) + list(Gbatt)  
+G = list(Gtherm) + list(Ghydro) + list(Gsolar) + list(Gwind) + list(Gbatt)
+
 
 df = pd.DataFrame({
     'thermal': [sum(pyo.value(instance.p[g, t, s]) for g in Gtherm for s in range(1, kwargs['num_scenarios'] + 1)) for t in range(1, kwargs['time_periods'] + 1)],
@@ -107,6 +120,7 @@ df = pd.DataFrame({
     'hydro': [sum(pyo.value(instance.p[g, t, s]) for g in Ghydro for s in range(1, kwargs['num_scenarios'] + 1)) for t in range(1, kwargs['time_periods'] + 1)],
     'battery': [sum(pyo.value(instance.p[g, t, s]) for g in Gbatt for s in range(1, kwargs['num_scenarios'] + 1)) for t in range(1, kwargs['time_periods'] + 1)],
 })
+
 ax = df.plot.area(stacked=True)
 plt.xlabel('Time Period')
 plt.ylabel('Power Output (MW)')
