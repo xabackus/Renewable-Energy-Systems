@@ -2,8 +2,8 @@
 
 from pyomo.environ import *
 
-def get_sets(model, num_solar, num_wind, num_batt, num_hydro, num_therm, time_periods = 24, num_scenarios = 1, \
-             num_nodes = 0, num_lines = 0, num_uncert = 0, num_demands = 0):
+def get_sets(model, num_solar, num_wind, num_batt, num_hydro, num_therm, num_existing_therm, time_periods=24, num_scenarios=1,
+             num_nodes=0, num_lines=0, num_uncert=0, num_demands=0):
     """
     G_solar = set of solar generators (first num_solar, from 1)
     G_wind = set of wind generators (next num_wind)
@@ -187,7 +187,7 @@ def get_variables(model):
     model.s = Var(model.Ghydro, model.T, model.S, within = NonNegativeReals)
     model.h = Var(model.Ghydro, model.T, model.S, within = NonNegativeReals)
 
-def get_objective(model, penalty = 0):
+def get_objective(model, penalty=0):
     def total_cost(model):
         # Fixed and variable costs for all generators
         total_fixed_cost = sum(model.CapEx[g] * model.p[g, t, s]
@@ -218,8 +218,8 @@ def get_objective(model, penalty = 0):
         # Total cost combining all components
         return (total_fixed_cost + total_variable_cost + thermal_startup_shutdown_cost +
                 battery_operation_cost + battery_state_change_cost + unserved_demand_cost)
-
     model.obj = Objective(rule=total_cost, sense=minimize)
+
 
 def get_renewable_constraints(model):
       def solar_limit_rule(model, g, t, s, o):
@@ -255,12 +255,13 @@ def get_hydro_constraints(model):
 
     # Power Output based on Water Discharge and Head
     def power_output_rule(model, g, t, s):
-        return model.p[g, t, s] == model.H[g] * model.q[g, t, s] * model.h[g,t,s]
+        return model.p[g, t, s]*1e6 == model.H[g] * model.q[g, t, s] * model.h[g,t,s]
+
 
     # Reservoir Level Limits
     def reservoir_limits_rule(model, g, t, s):
         return (model.Emin[g], model.e[g, t, s], model.Emax[g])
-
+      
     # Water Discharge Limits
     def discharge_limits_rule(model, g, t, s):
         return (model.Qmin[g], model.q[g, t, s], model.Qmax[g])
@@ -271,14 +272,17 @@ def get_hydro_constraints(model):
 
     # Head Calculation
     def head_calculation_rule(model, g, t, s):
-        return model.h[g, t, s] == model.Hbase[g] + model.A[g] * (model.e[g, t, s] - model.Ebase[g]) - model.B[g] * model.q[g, t, s]**2
-
+        return model.h[g, t, s] == model.Hbase[g] + model.A[g] * (model.e[g, t, s] - model.Ebase[g]) - model.B[g] * \
+            model.q[g, t, s] ** 2
+      
     # Initial and Final Reservoir Level
     def initial_hydro_rule(model, g, s):
         return model.e[g, model.T.first(), s] == model.Einit[g]
 
+
     def final_hydro_rule(model, g, s):
         return model.e[g, model.T.last(), s] == model.Efinal[g]
+
 
     # Apply constraints to the model
     model.water_balance = Constraint(model.Ghydro, model.T, model.S, rule=water_balance_rule)
@@ -286,7 +290,7 @@ def get_hydro_constraints(model):
     model.reservoir_limits = Constraint(model.Ghydro, model.T, model.S, rule=reservoir_limits_rule)
     model.discharge_limits = Constraint(model.Ghydro, model.T, model.S, rule=discharge_limits_rule)
     model.spillage_limits = Constraint(model.Ghydro, model.T, model.S, rule=spillage_limits_rule)
-    # model.head_calculation = Constraint(model.Ghydro, model.T, model.S, rule=head_calculation_rule)
+    model.head_calculation = Constraint(model.Ghydro, model.T, model.S, rule=head_calculation_rule)
     model.initial_hydro = Constraint(model.Ghydro, model.S, rule=initial_hydro_rule)
     model.final_hydro = Constraint(model.Ghydro, model.S, rule=final_hydro_rule)
 
@@ -328,6 +332,7 @@ def get_battery_constraints(model):
     model.soc_update = Constraint(model.Gbatt, model.T, model.S, rule=soc_update)
     model.exclusivity = Constraint(model.Gbatt, model.T, model.S, rule=exclusivity)
 
+
 def set_reference_node(model, slack_bus_id):
     """
     Sets the reference node for voltage angle.
@@ -341,11 +346,11 @@ def get_power_DCPF_constraints(model):
     """
 
     # Reference node: Fix voltage angle to 0
-    def reference_node_rule(model):
-        return model.th[model.ref_node, 1, 1, 1] == 0  # Assuming single scenario and uncertainty
+        def reference_node_rule(model, t, s, o):
+        return model.th[model.ref_node, t, s, o] == 0  # For all time periods, scenarios, and uncertainties
 
-    model.ref_node = Param(initialize=1)  # Set the reference node ID here
-    model.reference_constraint = Constraint(rule=reference_node_rule)
+    model.reference_constraint = Constraint(model.T, model.S, model.O, rule=reference_node_rule)
+
 
     # Nodal Power Balance
     def nodal_balance_rule(model, i, t, s, o):
@@ -397,7 +402,6 @@ def get_power_DCPF_constraints(model):
     model.system_balance = Constraint(model.T, model.S, model.O, rule=system_balance_rule)
 
 
-
 def get_reserve_constraints(model):
     def reserve_up(model, t, s):
         # Reserve up constraint for all generator types
@@ -422,7 +426,7 @@ def get_reserve_constraints(model):
 
 
 def get_thermal_constraints(model):
-        def min_up_time_rule(model, g, s):
+    def min_up_time_rule(model, g, s):
         min_up = model.UT[g]
         return sum(model.y[g, t, s] for t in model.T if t <= min_up) >= model.u[g, 1, s]  # Simplified
 
@@ -461,6 +465,8 @@ def get_thermal_constraints(model):
         return model.y[g, t, s] + model.z[g, t, s] <= 1
 
     # Apply constraints to the model
+    model.min_up_time_rule = Constraint(model.Gtherm, model.S, rule=min_up_time_rule)
+    model.min_down_time_rule = Constraint(model.Gtherm, model.S, rule=min_down_time_rule)
     model.logical_relationship = Constraint(model.Gtherm, model.T, model.S, rule=logical_relationship_rule)
     model.power_output_min = Constraint(model.Gtherm, model.T, model.S, rule=power_output_min_rule)
     model.power_output_max = Constraint(model.Gtherm, model.T, model.S, rule=power_output_max_rule)
@@ -470,29 +476,37 @@ def get_thermal_constraints(model):
 
 
 def opt_model_generator(num_solar=0, num_wind=0, num_batt=0, num_hydro=0, num_existing_therm=0, num_therm=0, time_periods=24,
-                        num_scenarios=1, num_nodes=0, num_lines=0, num_uncert=1, num_demands=0):
+                        num_scenarios=1, num_nodes=0, num_lines=0, num_uncert=1, num_demands=0, slack_bus_id=None):
+
     model_name = "UC Model"
     model = AbstractModel(model_name)
 
+                          
     # model set-up
     get_sets(model, num_solar, num_wind, num_batt, num_hydro, num_therm, num_existing_therm,
              time_periods, num_scenarios, num_nodes, num_lines, num_uncert, num_demands)
+
     get_parameters(model)
+    
+    model.ref_node = Param(initialize=slack_bus_id)
+
     get_variables(model)
 
-    # objective
-    get_objective(model)
-
-    # constraints
+    # Define constraints
     if num_solar or num_wind:
         get_renewable_constraints(model)
-    if num_hydro:
+    if num_hydro > 0:
         get_hydro_constraints(model)
-    if num_batt:
+    if num_batt > 0:
         get_battery_constraints(model)
+
+    # Make sure to define the power flow constraints after ref_node is defined
     get_power_DCPF_constraints(model)
+
     get_reserve_constraints(model)
-    if num_therm:
+    if num_therm > 0:
         get_thermal_constraints(model)
+
+    get_objective(model)
 
     return model
