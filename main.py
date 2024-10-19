@@ -190,7 +190,6 @@ def get_variables(model):
 
 def get_objective(model, penalty=10000):
     def total_cost(model):
-            def total_cost(model):
         # Fixed and variable costs for all generators
         total_fixed_cost = sum(model.CapEx[g]
                                for g in model.G for t in model.T for s in model.S)
