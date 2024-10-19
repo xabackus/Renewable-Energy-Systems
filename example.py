@@ -48,7 +48,6 @@ db = parsecase(net, **kwargs)
 with open("UCdata.p", "rb") as f:
     p_data = pickle.loads(pickle.load(f))  
 
-slack_bus = p_data[None].get("slack_bus")
 
 from main import opt_model_generator  
 
@@ -81,7 +80,7 @@ model = opt_model_generator(**opt_model_kwargs)
 
 instance = model.create_instance(data=p_data)
 # make into MPS file
-instance.write("data/" + model_name + ".mps")
+# instance.write("data/" + model_name + ".mps")
 
 solver = pyo.SolverFactory('gurobi')
 result = solver.solve(instance, tee=False)
