@@ -134,11 +134,10 @@ def parsecase(net, num_solar=0, num_wind=0, num_batt=0, num_hydro=0, num_therm=0
         p["Pdchg"] = {g: p["Pmax"][g] for g in Gbatt}  # Max discharge rate equals Pmax
         p["Hchg"] = {g: random_range(0.95, 1.0) for g in Gbatt}     # Charge efficiency 97.5% ±5%
         p["Hdchg"] = {g: random_range(0.95, 1.0) for g in Gbatt}    # Discharge efficiency 97.5% ±5%
-        p["SoCmin"] = {g: 0.095, 0.105 for g in Gbatt}              # Minimum SoC 10% ±5%
-        p["SoCmax"] = {g: 0.855, 0.945 for g in Gbatt}              # Maximum SoC 90% ±5%
+        p["SoCmin"] = {g: random_range(0.095, 0.105) for g in Gbatt}              # Minimum SoC 10% ±5%
+        p["SoCmax"] = {g: random_range(0.855, 0.945) for g in Gbatt}              # Maximum SoC 90% ±5%
         p["Ecap"] = {g: p["Pmax"][g] * 4 for g in Gbatt}  # Assuming 4-hour duration
-        p["DODmax"] = {g: 0.76, 0.84 for g in Gbatt}               # DODmax 80% ±5%
-
+        p["DODmax"] = {g: random_range(0.76, 0.84) for g in Gbatt}   
 
     # Solar and wind parameters
     if len(Grenew) > 0:
