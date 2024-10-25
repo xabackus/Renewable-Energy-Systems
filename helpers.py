@@ -56,40 +56,40 @@ def parsecase(net, num_solar=0, num_wind=0, num_batt=0, num_hydro=0, num_therm=0
 
     # Fixed costs
     p["CapEx"] = {
-        g: random_range(1342.02, 1544.05) if g in Gsolar else
-        random_range(1456.49, 1675.74) if g in Gwind else
-        random_range(3181.53, 3660.48) if g in Ghydro else
-        random_range(800, 1200) if g in Gbatt else
-        random_range(3000, 4000) if gen_types[g] == 'coal' else
-        random_range(800, 1000)  # For 'ccgt'
+        g: random_range(902.5, 997.5) if g in Gsolar else  # Solar PV: $950 ±5% per kW
+        random_range(1425, 1575) if g in Gwind else        # Onshore Wind: $1500 ±5% per kW
+        random_range(3800, 4200) if g in Ghydro else       # Hydro: $4000 ±5% per kW
+        random_range(1235, 1365) if g in Gbatt else        # Battery Storage: $1300 ±5% per kW
+        random_range(3800, 4200) if gen_types[g] == 'coal' else  # Coal: $4000 ±5% per kW
+        random_range(950, 1050)  # For 'ccgt', CCGT: $1000 ±5% per kW
         for g in G
     }
     # Variable costs
     p["OpEx"] = {
-        g: random_range(0, 5) if g in Gsolar else
-        random_range(0, 5) if g in Gwind else
-        random_range(2, 5) if g in Ghydro else
-        random_range(5, 10) if g in Gbatt else
-        random_range(20, 50) if gen_types[g] == 'coal' else
-        random_range(15, 30)  # For 'ccgt'
+        g: random_range(0, 1.05) if g in Gsolar else         # Solar PV: $0-$1 per MWh
+        random_range(0, 1.05) if g in Gwind else             # Wind: $0-$1 per MWh
+        random_range(1.9, 2.1) if g in Ghydro else           # Hydro: $2 ±5% per MWh
+        random_range(7.6, 8.4) if g in Gbatt else            # Battery: $8 ±5% per MWh
+        random_range(38, 42) if gen_types[g] == 'coal' else  # Coal: $40 ±5% per MWh
+        random_range(28.5, 31.5)  # For 'ccgt', CCGT: $30 ±5% per MWh
         for g in G
     }
 
     # Start-up costs 
     p["CSU"] = {
         g: 0 if g in Grenew or g in Gbatt else
-        random_range(1.0, 3.0) if g in Ghydro else
-        random_range(180, 220) if gen_types[g] == 'coal' else
-        random_range(280, 320)  # For 'ccgt'
+        random_range(1.9, 2.1) if g in Ghydro else                       # Hydro: $2 ±5% per MW per Start
+        random_range(95, 105) if gen_types[g] == 'coal' else             # Coal: $100 ±5% per MW per Start
+        random_range(47.5, 52.5)  # For 'ccgt', CCGT: $50 ±5% per MW per Start
         for g in G
     }
 
     # Shut-down costs ($/MW/Stop)
     p["CSD"] = {
         g: 0 if g in Grenew or g in Gbatt else
-        random_range(0.5, 1.5) if g in Ghydro else
-        random_range(50, 70) if gen_types[g] == 'coal' else
-        random_range(80, 100)  # For 'ccgt'
+        random_range(0.95, 1.05) if g in Ghydro else                     # Hydro: $1 ±5% per MW per Stop
+        random_range(23.75, 26.25) if gen_types[g] == 'coal' else        # Coal: $25 ±5% per MW per Stop
+        random_range(9.5, 10.5)  # For 'ccgt', CCGT: $10 ±5% per MW per Stop
         for g in G
     }
 
@@ -121,28 +121,29 @@ def parsecase(net, num_solar=0, num_wind=0, num_batt=0, num_hydro=0, num_therm=0
         g: p["Pmax"][g] if g in Gbatt else
         p["Pmax"][g] if g in Grenew else
         p["Pmax"][g] if g in Ghydro else
-
-        p["Pmax"][g] * 0.6 if gen_types[g] == 'coal' else  # 60% per hour for coal
-        p["Pmax"][g] * 3.0 # 300% per hour for CCGT
+        p["Pmax"][g] * 1.0 if gen_types[g] == 'coal' else   # Coal: 100% per hour
+        p["Pmax"][g] * 2.85  # For 'ccgt', CCGT: 285% per hour
         for g in G
     }
     p["RD"] = p["RU"].copy()
 
+
     # Battery parameters
     if len(Gbatt) > 0:
-        p["Pchg"] = {g: random_range(47.5, 52.5) for g in Gbatt}
-        p["Pdchg"] = {g: random_range(47.5, 52.5) for g in Gbatt}
-        p["Hchg"] = {g: random_range(0.90, 0.95) for g in Gbatt}
-        p["Hdchg"] = {g: random_range(0.90, 0.95) for g in Gbatt}
-        p["SoCmin"] = {g: random_range(0.10, 0.20) for g in Gbatt}
-        p["SoCmax"] = {g: random_range(0.90, 0.95) for g in Gbatt}
-        p["Ecap"] = {g: 100 for g in Gbatt}
-        p["DODmax"] = {g: random_range(0.80, 0.90) for g in Gbatt}
+        p["Pchg"] = {g: p["Pmax"][g] for g in Gbatt}  # Max charge rate equals Pmax
+        p["Pdchg"] = {g: p["Pmax"][g] for g in Gbatt}  # Max discharge rate equals Pmax
+        p["Hchg"] = {g: random_range(0.95, 1.0) for g in Gbatt}     # Charge efficiency 97.5% ±5%
+        p["Hdchg"] = {g: random_range(0.95, 1.0) for g in Gbatt}    # Discharge efficiency 97.5% ±5%
+        p["SoCmin"] = {g: 0.095, 0.105 for g in Gbatt}              # Minimum SoC 10% ±5%
+        p["SoCmax"] = {g: 0.855, 0.945 for g in Gbatt}              # Maximum SoC 90% ±5%
+        p["Ecap"] = {g: p["Pmax"][g] * 4 for g in Gbatt}  # Assuming 4-hour duration
+        p["DODmax"] = {g: 0.76, 0.84 for g in Gbatt}               # DODmax 80% ±5%
+
 
     # Solar and wind parameters
     if len(Grenew) > 0:
         p["Xs"] = {
-            (o, t): random_range(0.16, 0.23) * random_range(4, 6)
+            (o, t): random_range(0.1425, 0.1575)  # Solar CF: 15% ±5%
             for o in range(1, num_uncert + 1)
             for t in range(1, time_periods + 1)
         }
@@ -152,7 +153,8 @@ def parsecase(net, num_solar=0, num_wind=0, num_batt=0, num_hydro=0, num_therm=0
             for t in range(1, time_periods + 1)
             for o in range(1, num_uncert + 1)
         }
-        p["Gam"] = {g: 0.45 for g in Gwind}
+        p["Gam"] = {g: random_range(0.3325, 0.3675) for g in Gwind}  # Wind CF: 35% ±5%
+
 
     # Hydro parameters
     if len(Ghydro) > 0:
@@ -182,10 +184,17 @@ def parsecase(net, num_solar=0, num_wind=0, num_batt=0, num_hydro=0, num_therm=0
         for d in range(1, num_demands + 1)
     }
 
-    p["Dd"] = {
-        t: sum(p["Xdemand"][t, d] for d in range(1, num_demands + 1))
-        for t in range(1, time_periods + 1)
-    }
+    total_load = net.load['p_mw'].sum()
+
+    def demand_curve(t):
+        time_of_day = (t - 1) % 24  # Hours from 0 to 23
+        peak_load = total_load * 1.1  # 10% above average
+        off_peak_load = total_load * 0.9  # 10% below average
+        variation = np.sin(np.pi * time_of_day / 24)
+        return off_peak_load + (peak_load - off_peak_load) * variation
+    
+    p["Dd"] = {t: demand_curve(t) for t in T}
+                
 
 
     # # Demand curve
@@ -207,32 +216,34 @@ def parsecase(net, num_solar=0, num_wind=0, num_batt=0, num_hydro=0, num_therm=0
 
 
     def reserve_requirement(t):
-        base_reserve = 0.03 * p["Dd"][t]  # 3% of demand as base reserve
+        base_reserve = 0.05 * p["Dd"][t]  # 5% of demand as base reserve
         renewable_capacity = sum(p["Pmax"][g] for g in Grenew)
-        additional_reserve = 0.05 * renewable_capacity  # Additional 5% of renewable capacity
+        additional_reserve = 0.105 * renewable_capacity  # 10% ±5% of renewable capacity
         return base_reserve + additional_reserve
-
-    p["Rup"] = {t: reserve_requirement(t) for t in range(1, time_periods + 1)}
-    p["Rdn"] = {t: reserve_requirement(t) for t in range(1, time_periods + 1)}
+    
+    p["Rup"] = {t: reserve_requirement(t) for t in T}
+    p["Rdn"] = {t: reserve_requirement(t) for t in T}
 
 
 
     # Thermal generator parameters here
     p["Fmax"] = {l: 250 for l in range(1, num_lines + 1)}
 
+    # Updated Minimum up and down times
+    p["UT"] = {
+        g: random_range(9.5, 10.5) if gen_types[g] == 'coal' else  # Coal: 10 ±5% hours
+        random_range(4.75, 5.25)  # For 'ccgt', 5 ±5% hours
+        for g in Gtherm
+    }
+    p["DT"] = p["UT"].copy()
+    
+    # Updated Start-up and Shut-down times
     p["SU"] = {
-        g: random_range(1,12) if gen_types[g] == 'coal' else 
-        random_range(1,2)
+        g: random_range(4.75, 5.25) if gen_types[g] == 'coal' else  # Coal: 5 ±5% hours
+        random_range(0.95, 1.05)  # For 'ccgt', 1 ±5% hours
         for g in Gtherm
     }
-    p["SD"] = {
-        g: random_range(4,10) if gen_types[g] == 'coal' else  
-        random_range(1,2)
-        for g in Gtherm
-    }
-                
-    p["UT"] = {g: 6 for g in Gtherm}  # or 12
-    p["DT"] = {g: 6 for g in Gtherm}  # or 12
+    p["SD"] = p["SU"].copy()
 
     p["Lg"] = {}
     for g in G:
