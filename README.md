@@ -45,6 +45,18 @@ We welcome contributions to this project! If you have access to real-world datas
 4. Push to the branch (`git push origin feature-branch`).
 5. Create a new Pull Request.
 
+## Data Sources
+This project incorporates data from several authoritative sources to ensure accuracy and reliability in modeling and analysis. The data sources include U.S. government agencies, research laboratories, and industry organizations. Below is a detailed description of each data source used, along with the relevant links.
+- U.S. Energy Information Administration (EIA): [Assumptions to the Annual Energy Outlook 2023](https://www.eia.gov/outlooks/aeo/assumptions/)
+- Annual Technology Baseline (ATB): [NREL Annual Technology Baseline](https://data.openei.org/s3_viewer?bucket=oedi-data-lake&prefix=ATB%2Felectricity%2Fcsv%2F) 
+  - Further Generator Cost and Performance Characterization: [NREL Technologies Report](https://atb.nrel.gov/electricity/2024/technologies)
+- PJM Interconnection: [PJM Manuals and Documents](https://www.pjm.com/library/manuals)
+- North American Electric Reliability Corporation (NERC): [Balancing and Frequency Control](https://www.nerc.com/comm/OC/Documents/2023_FRAA_Report_Final.pdf)
+- U.S. Energy Information Administration (EIA): [EIA Electricity Data](https://www.eia.gov/electricity/data.php)
+- National Renewable Energy Laboratory (NREL): [NREL Operating Reserves Report](https://www.nrel.gov/docs/fy24osti/89025.pdf)
+- NREL Cost and Performance Assumptions for Modeling Electricity Generation Technologies: [NREL Cost and Performance Assumptions](https://research-hub.nrel.gov/en/publications/cost-and-performance-assumptions-for-modeling-electricity-generat)
+- Typical Utility Daily Load Profiles: [Sample Load Profiles from EPRI](https://loadshape.epri.com/)
+
 ## License
 This project is released under the MIT License. See the LICENSE file for more details.
 
